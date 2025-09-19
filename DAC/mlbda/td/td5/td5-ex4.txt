@@ -1,0 +1,55 @@
+CREATE TABLE Realisateur (
+    nom VARCHAR2(30) PRIMARY KEY,
+    age NUMBER(3)
+);
+
+CREATE TABLE Producteur (
+    nom VARCHAR2(30) PRIMARY KEY,
+    budget NUMBER(10)
+);
+
+CREATE TABLE Film (
+    numFilm NUMBER(10) PRIMARY KEY,
+    titre VARCHAR2(50),
+    realisateur VARCHAR2(30) REFERENCES Realisateur(nom),
+    producteur VARCHAR2(30) REFERENCES Producteur(nom)
+);
+
+CREATE TABLE Programme (
+    salle VARCHAR(3),
+    jour VARCHAR(10),
+    numFilm NUMBER(10) REFERENCES Film(numFilm),
+    nbEntrees NUMBER(10),
+    PRIMARY KEY(salle, jour)
+);
+
+
+
+ex1
+<!ELEMENT schema (table+)>
+<!ATTLIST schema nom CDATA #REQUIRED>
+
+<!ELEMENT table (attributs+, primaryKey?, foreignKey*, unique*)>
+<!ATTLIST table nom ID #REQUIRED>
+
+<!ELEMENT attributs (varchar|number|date, notNull?, default?)>
+<!ATTLIST attributs nom CDATA #REQUIRED>
+
+<!ELEMENT varchar EMPTY>
+<!ATTLIST varchar taille CDATA #REQUIRED>
+
+<!ELEMENT number EMPTY>
+<!ATTLIST number nbchiffres CDATA #IMPLIED
+          partidecimal CDATA #IMPLIED>
+
+<!ELEMENT date EMPTY>
+
+<!ELEMENT notNull EMPTY>
+<!ELEMENT default (#PCDATA)>
+
+<!ELEMENT primaryKey (attributs)>
+<!ELEMENT foreignKey (attributs)>
+<!ATTLIST foreignKey refTable IDREF #REQUIRED
+          refField CDATA #REQUIRED>
+
+<!ELEMENT unique (attributs)>

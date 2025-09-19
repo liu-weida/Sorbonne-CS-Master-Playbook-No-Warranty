@@ -1,0 +1,34 @@
+﻿<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="base">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="restaurant" minOccurs="1" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <!-- c1 -->
+              <xs:element name="fermeture" type="xs:string" minOccurs="0"/>
+              <xs:element name="menu" minOccurs="2" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:attribute name="nom" type="xs:string" use="required"/>
+                  <xs:attribute name="prix" type="xs:int" use="required"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            
+              <!-- c2 -->
+              <xs:element name="plusBeauMonument" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                
+                  <!-- c3 -->
+                  <xs:attribute name="nom" type="xs:string" use="required"/>
+                  <xs:attribute name="tarif" type="xs:int" use="required"/>
+                  
+                </xs:complexType>
+              </xs:element>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,82 @@
+--EX1
+
+--Q1
+--select distinct color
+--from product
+
+--Q2
+--SELECT unitPrice
+--FROM Product
+--ORDER BY unitPrice DESC
+--limit 10
+
+--Q3
+--SELECT DISTINCT productId
+--FROM reviews
+--WHERE rating = 5
+
+--Q4
+--SELECT customerId,emailAddress
+--FROM customer
+--WHERE emailAddress LIKE "%@herman.com"
+
+--Q5
+--SELECT customerId
+--FROM purchases
+--WHERE ARRAY_LENGTH(lineItems)= 5
+
+--Q6
+--SELECT DISTINCT customerId
+--FROM purchases
+--WHERE ANY l IN lineItems SATISFIES l.count > 4 END
+
+--Q7
+--SELECT DISTINCT customerId
+--FROM purchases
+--WHERE EVERY l IN lineItems SATISFIES l.count > 4 END
+
+--Q8
+--a)
+--SELECT p.productId, cat
+--FROM product p UNNEST categories cat
+
+--b)
+--SELECT p.customerId, item
+--FROM purchases p UNNEST lineItems AS item
+
+--Q9
+--SELECT p.customerId, ARRAY i.product FOR i IN p.lineItems END AS product
+--FROM purchases p
+
+--Q10
+--SELECT c.customerId, c.state, p.lineItems
+--FROM purchases p INNER JOIN customer c ON KEYS p.customerId
+
+--Q11
+--SELECT p.customerId, SUM(i.count) AS qteProduits
+--FROM purchases p UNNEST lineItems as i
+--GROUP BY p.customerId
+
+--EX2
+
+--Q1
+--SELECT p.name
+--FROM product p unnest categories c
+--WHERE lower(c) = 'golf'
+--LIMIT 10 OFFSET 10
+
+--Q2
+--SELECT DISTINCT cat
+--FROM product p unnest categories cat
+
+--Q3
+--SELECT p.name
+--FROM product p 
+--WHERE lower(p.name) LIKE '%cup%'
+
+--Q4
+--SELECT p.name, p.unitPrice, p.color
+--FROM product p unnest categories c
+--WHERE c = 'Appliances'
+
+--Q5

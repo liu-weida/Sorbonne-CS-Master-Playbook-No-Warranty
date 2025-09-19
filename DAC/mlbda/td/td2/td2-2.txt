@@ -1,0 +1,39 @@
+create type etu as object(
+nom varchar2(30)，
+numero number（8），
+age number(2),
+annee number(1),
+contract ens_uenote
+
+)
+
+create type ens_uenote sa table of uenote
+
+create type uenote as object (
+unite ref ue,
+note number(2,2)
+)
+
+create type ue as object(
+nom varchar2 (30),
+code varchar2 (5),
+ects number(2),
+compose_de ens_seance
+)
+
+create type ens_seance as table of seance
+
+create type seance as object(
+nom varchar2(30),
+sujet varchar2(30),
+present ens_etu
+)
+
+create type ens_etu as table of ref etu
+
+create table lesetu of etu
+	nested table contrat store as t1;
+create table lesue of ue
+	nested table seances store as t2(
+	nested table inscrits store as t3
+)
