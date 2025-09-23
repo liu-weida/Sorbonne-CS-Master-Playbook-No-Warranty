@@ -1,0 +1,6 @@
+// i.next() en dernier pcq on initialise avec le next 
+let x = new Range(10,14) in 
+			(
+				i = x.iterator.next();while i != false do ( print(i); print("/"); i.next());
+				j = x.iterator.next();while j != false do ( print(j); print("!"); j.next())
+			)

@@ -1,0 +1,7 @@
+package com.paracamplus.ilp4.compiler.normalizer.INormalizationFactory hérite de la même classe mais de ILP4;
+package com.paracamplus.ilp4.compiler.normalizer.NormalizationFactory  hérite de la même classe mais de ILP4;;
+package com.paracamplus.ilp4.compiler.normalizer.Normalizer  hérite de la même classe mais de ILP4;
+com.paracamplus.ilp4.compiler hérite de la même classe de ILP4 et impélemnte IASTvisitor de exam 1920;
+com.paracamplus.ilp4.compiler.FreeVariableCollector hérite de la même classe mais de ILP4et implémente Iast visiteur de exam1920
+com.paracamplus.ilp2.compiler.GlobalVariableCollector hérite de la même classe mais de ILP4et implémente Iast visiteur de exam1920
+

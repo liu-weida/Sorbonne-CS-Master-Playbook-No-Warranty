@@ -1,0 +1,17 @@
+.DS_store
+*.QNC
+*~
+*.o
+*.a
+Samples*/*.c
+C/gc-7.2
+*.class
+*BAK
+Java/bin
+*.aux
+*.log
+*.pdf
+*.out
+*.iml
+.idea
+.settings

@@ -1,0 +1,2 @@
+let a = A(1) in
+match a with A(a1, a2) then print("Error") else print("Error")

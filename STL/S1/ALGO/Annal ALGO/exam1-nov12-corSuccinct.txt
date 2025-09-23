@@ -1,0 +1,25 @@
+
+Voici quelques éléments de corrigé pour l'examen de novembre 2012
+
+
+Exo1
+Q1-1 : on supprime 1 à 1 les minimum successifs de la file => O(n log n)
+Q1-2 : on fait un parcours symétrique de l'arbre => O(n)
+Q1-3 : on ne peut rien faire d'autre que trier le tableau  => O(n log n)
+Q2 : log_4(n+1) <= h+1 <= log_2(n+1) 
+
+Exo2:
+Q1 : interclassement classique : 2 liste en entrée et on sort une 3 eme liste
+Q2-1 : 
+Q2-2 : Pour i de 1 à N-1, choisir 2 tableaux de taille min et les interclasser dans un nouveau tableau (structure de données = file de priorité)
+Q3-1 : optimalité dans la classe des algos par comparaison : demo analogue à la preuve de l'optimalité de Huffmann (dans les transparents de cours)
+Q3-2 : \sum _{j=2}^{N+1} 2^j-1 = 2^{N+2} - N - 4
+Q4-1 : ajout de 3 = un tableau de taille 1 en plus ; ajout de 7 faire union de tableaux et on se retrouve avec 1 seul tableau, de 8 éléments
+Q4-2 : 2^{a(n)}-1, ou a(n) est le plus petit bit à 0 dans la décomposition binaire de n (et si n = 2^k-1, alors a(n)=k)
+
+Exo3:
+Q1 : 16 est un faux positif
+Q2:  on fait un OU des 2 tableaux
+Q3 : p_0 : aucun h_i(x) ne tombe sur la case, pour aucun x   ; p_r = (1-p_0)^k, a conditions tous h_i uniformes et independants
+Q4 :  k=log2 * m/n, mais on ne peut pas toujours avoir facilement plein de fonctions de hachage uniformes et independantes (sauf par hachage universel ?)
+

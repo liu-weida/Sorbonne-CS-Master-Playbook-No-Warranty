@@ -1,0 +1,2 @@
+let a = $B(1, 2, 3) in 
+match a with B(b1, b2) then print(b1 + b2) else print("Error")

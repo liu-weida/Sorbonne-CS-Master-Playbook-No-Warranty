@@ -1,0 +1,222 @@
+
+/** Q1 */
+/** on écrit un unique module générique pour les entrées (respectivement pour les sorties),
+associé (à l’initialisation) à un capteur. */
+
+module SPEED:
+input Centimeter, Second;
+    relation Centimeter # Second;
+output Speed : integer;
+loop
+var Distance := 0 : integer in
+abort
+every Centimeter do
+Distance := Distance+1
+end every
+when Second do
+emit Speed(Distance)
+end abort
+end var
+end loop
+end module
+
+module Entry:
+  constant K : integer;
+  input capteur;
+  output enterPerson: integer;
+  var isOpen : boolean in
+  var queue : integer in
+ 
+  every immediate capteur do
+    if  capteur  null  then
+        queue := queue + 1;
+    end if
+  end every;
+
+  every K tick do 
+     if isOpen and queue > 0 then
+        emit enterPerson;
+        queue := queue - 1;
+    end if
+  end every
+  end var
+  end var  
+end module
+
+
+module Exit:
+    constant K : integer;
+    input capteur;  
+    output exitPerson: integer;
+    var isOpen := false : boolean in
+    var queue := 0 : integer in
+    every immediate capteur do
+        if capteur then
+            queue := queue + 1;
+        end
+        every K tick when isOpen and queue > 0 do
+            emit exitPerson;
+            queue := queue - 1;
+        end
+end
+
+/** on écrit un module de contrôle qui compte le nombre de personnes actuellement à l’intérieur
+du musée et qui ferme les entrées le cas échéant */
+
+
+module Control(input enterPerson, exitPerson; output blockEntries, unblockEntries; input alarm, reset);
+constant N := 100;  
+var inside := 0;
+loop
+    await [enterPerson];
+    if inside < N then
+        inside := inside + 1;
+    else
+        emit blockEntries;
+    end
+    await [exitPerson];
+    inside := inside - 1;
+    if inside < N then
+        emit unblockEntries;
+    end
+    /** le système doit pouvoir réagir à un signal extérieur d’alarme, fermant entrées et sorties,
+et un signal extérieur de reset qui réouvre les entrées et sorties.*/
+    trap Emergency in
+        present alarm then
+            emit blockEntries;
+            await reset;
+            emit unblockEntries;
+            exit Emergency;
+        end
+    end
+end
+
+/** l’initialisation du système se fera avec 5 capteurs (3 entrées, 2 sorties) */
+module MuseumSystem;
+signal sensor1, sensor2, sensor3, sensor4, sensor5, enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset;
+var isOpenEntry1, isOpenEntry2, isOpenEntry3, isOpenExit1, isOpenExit2: boolean;
+var queueEntry1, queueEntry2, queueEntry3, queueExit1, queueExit2: integer;
+run Entry(sensor1, enterPerson, isOpenEntry1, queueEntry1);
+run Entry(sensor2, enterPerson, isOpenEntry2, queueEntry2);
+run Entry(sensor3, enterPerson, isOpenEntry3, queueEntry3);
+run Exit(sensor4, exitPerson, isOpenExit1, queueExit1);
+run Exit(sensor5, exitPerson, isOpenExit2, queueExit2);
+run Control(enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset);
+
+end module
+
+
+/** Q2 Ajouter au système un module qui calcule à chaque instant, le nombre moyen de visiteur depuis l’ouverture du musée (c’est à dire la somme des visiteurs à chaque instant divisée par le nombre d’instants). */
+module AverageVisitorCount(input enterPerson, exitPerson; output float averageVisitors);
+var totalVisitors := 0;
+var totalTicks := 0;
+var currentVisitors := 0;
+
+loop
+    every tick do
+        totalTicks := totalTicks + 1;
+        totalVisitors := totalVisitors + currentVisitors;
+        var avg : float := 0.0;
+        if totalTicks > 0 then
+            avg := float(totalVisitors) / float(totalTicks);
+        end
+        emit averageVisitors(avg);
+
+        present enterPerson then
+            currentVisitors := currentVisitors + 1;
+        end
+
+        present exitPerson then
+            if currentVisitors > 0 then
+                currentVisitors := currentVisitors - 1;
+            end
+        end
+    end
+end
+
+module MuseumSystem;
+signal sensor1, sensor2, sensor3, sensor4, sensor5, enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset, averageVisitors: float;
+var isOpenEntry1, isOpenEntry2, isOpenEntry3, isOpenExit1, isOpenExit2: boolean;
+var queueEntry1, queueEntry2, queueEntry3, queueExit1, queueExit2: integer;
+
+run Entry(sensor1, enterPerson, isOpenEntry1, queueEntry1);
+run Entry(sensor2, enterPerson, isOpenEntry2, queueEntry2);
+run Entry(sensor3, enterPerson, isOpenEntry3, queueEntry3);
+run Exit(sensor4, exitPerson, isOpenExit1, queueExit1);
+run Exit(sensor5, exitPerson, isOpenExit2, queueExit2);
+run Control(enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset);
+run AverageVisitorCount(enterPerson, exitPerson, averageVisitors);
+end module
+
+/** Q3 Ajouter un module qui ouvre une nouvelle une entrée lorsque le nombre de personnes dans les files d’entrées est plus grand que M . */
+module DynamicEntryControl(input updateQueue1, updateQueue2, updateQueue3; var queue1, queue2, queue3: integer; output openNewEntry; constant M: integer);
+var totalQueue := 0;
+
+every tick do
+    totalQueue := queue1 + queue2 + queue3;
+    if totalQueue > M then
+        emit openNewEntry;
+    end
+end
+
+module MuseumSystem;
+signal sensor1, sensor2, sensor3, sensor4, sensor5, enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset, averageVisitors: float, updateQueue1, updateQueue2, updateQueue3, openNewEntry;
+var isOpenEntry1, isOpenEntry2, isOpenEntry3, isOpenExit1, isOpenExit2: boolean;
+var queueEntry1, queueEntry2, queueEntry3, queueExit1, queueExit2: integer;
+constant M := 50;  /** Seuil pour ouvrir une nouvelle entrée*/
+
+run Entry(sensor1, enterPerson, isOpenEntry1, queueEntry1);
+emit updateQueue1(queueEntry1);
+run Entry(sensor2, enterPerson, isOpenEntry2, queueEntry2);
+emit updateQueue2(queueEntry2);
+run Entry(sensor3, enterPerson, isOpenEntry3, queueEntry3);
+emit updateQueue3(queueEntry3);
+run Exit(sensor4, exitPerson, isOpenExit1, queueExit1);
+run Exit(sensor5, exitPerson, isOpenExit2, queueExit2);
+run Control(enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset);
+run AverageVisitorCount(enterPerson, exitPerson, averageVisitors);
+run DynamicEntryControl(updateQueue1, updateQueue2, updateQueue3, queueEntry1, queueEntry2, queueEntry3, openNewEntry, M);
+end module
+
+/** Q4 Modifier le code pour que l’on ferme une entrée lorsque le nombre de personnes dans les files d’entrées est nul, et qu’au moins deux entrées actuellement sont ouvertes. */
+module EntryControl(input updateQueue1, updateQueue2, updateQueue3; var queue1, queue2, queue3: integer; var isOpen1, isOpen2, isOpen3: boolean; output closeEntry);
+every tick do
+    var totalQueue := queue1 + queue2 + queue3;
+    var openEntries := 0;
+    if isOpen1 then openEntries := openEntries + 1; end
+    if isOpen2 then openEntries := openEntries + 1; end
+    if isOpen3 then openEntries := openEntries + 1; end
+
+    if totalQueue = 0 and openEntries >= 2 then
+        /** Logic to decide which entry to close, here we choose the last open one for simplicity*/
+        if isOpen3 then
+            isOpen3 := false;
+            emit closeEntry(3);  /** Emit signal to indicate which entry is being closed*/
+        elseif isOpen2 then
+            isOpen2 := false;
+            emit closeEntry(2);
+        elseif isOpen1 then
+            isOpen1 := false;
+            emit closeEntry(1);
+        end
+    end
+end
+
+module MuseumSystem;
+signal sensor1, sensor2, sensor3, sensor4, sensor5, enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset, averageVisitors: float, updateQueue1, updateQueue2, updateQueue3, openNewEntry, closeEntry: integer;
+var isOpenEntry1, isOpenEntry2, isOpenEntry3, isOpenExit1, isOpenExit2: boolean;
+var queueEntry1, queueEntry2, queueEntry3, queueExit1, queueExit2: integer;
+
+run Entry(sensor1, enterPerson, isOpenEntry1, queueEntry1);
+run Entry(sensor2, enterPerson, isOpenEntry2, queueEntry2);
+run Entry(sensor3, enterPerson, isOpenEntry3, queueEntry3);
+emit updateQueue1(queueEntry1);
+emit updateQueue2(queueEntry2);
+emit updateQueue3(queueEntry3);
+run Exit(sensor4, exitPerson, isOpenExit1, queueExit1);
+run Exit(sensor5, exitPerson, isOpenExit2, queueExit2);
+run Control(enterPerson, exitPerson, blockEntries, unblockEntries, alarm, reset);
+run AverageVisitorCount(enterPerson, exitPerson, averageVisitors);
+run DynamicEntryControl(updateQueue1, updateQueue2, updateQueue3, queueEntry1, queueEntry2, queueEntry3, openNewEntry, 50);
+run EntryControl(updateQueue1, updateQueue2, updateQueue3, queueEntry1, queueEntry2, queueEntry3, isOpenEntry1, isOpenEntry2, isOpenEntry3, closeEntry);
+end module

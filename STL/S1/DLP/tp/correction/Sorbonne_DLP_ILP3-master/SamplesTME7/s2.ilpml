@@ -1,0 +1,22 @@
+function f(nb, msg)(
+    let i = 0 in
+        while i < nb do(
+            print(msg);
+            i = i + 1;
+            yield();
+        )
+);
+
+let c1 = costart f(5,"A") in
+let c2 = costart f(3,"B") in
+let c3 = costart f(7,"C") in
+let i = 0 in
+    while i < 10 do(
+        print(i);
+
+        resume(c1);
+        resume(c2);
+        resume(c3);
+
+        i = i + 1
+    )

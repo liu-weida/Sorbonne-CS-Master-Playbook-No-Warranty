@@ -1,0 +1,5 @@
+test1 = Affiche 3 | Retourne false -> Vérifie le cas par défaut
+test2 = Affiche 3 | Retourne false -> Vérifie le cas plus d'arguments que de variables
+test3 = Affiche "OK" | Retourne false -> Vérifie le cas d'une erreur de type
+test4 = Affiche "OK" | Retourne false -> Vérifie le cas d'une erreur de tag
+test5 = EvaluationException -> Vérifie le cas d'un exception car trop de variables

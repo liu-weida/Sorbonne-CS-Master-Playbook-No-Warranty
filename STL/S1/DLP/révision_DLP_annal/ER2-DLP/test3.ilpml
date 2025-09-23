@@ -1,0 +1,2 @@
+let a = 5 in
+match a with A(a1) then print("Error") else print("OK")

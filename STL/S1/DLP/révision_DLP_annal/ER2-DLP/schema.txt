@@ -1,0 +1,11 @@
+Le schéma de compilation de la construction d'une somme est assez simple :
+
+- On évalue tous les arguments de la somme que l'on stock dans des variables temporaires
+- Avec la fonction C on alloue et on créer une nouvelle somme
+
+Le schéma du filtrage est lui plus compliqué
+
+- On récupère l'objet demandé
+- On utilise la fonction match_with de la libc
+- Si c'est valide, on met toutes les variables aux valeur de la somme
+- Sinon on va dans le else

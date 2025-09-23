@@ -1,0 +1,20 @@
+Il faut ajouter la structure suivante au à ILP_Object :
+
+struct asSum {
+    char     tag[1];
+    int      nb_val;
+    values   ILP_Object[1];
+} asSum;
+
+Il faut également ajouter une fonction permettant de faire un objet somme :
+
+ILP_Object make_sum(char *tag, int nb_val, ILP_Object *vals);
+
+Pour allouer la mémoire il faut également une fonction permettant de donner la mémoire nécessaire :
+
+void ILP_AllocateSum(int nb_val);
+
+Et enfin, il faut des méthodes permettant de tester les objets:
+
+int is_sum(ILP_Object o);
+int match_with(ILP_Object o, char *tag);

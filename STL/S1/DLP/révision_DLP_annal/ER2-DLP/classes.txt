@@ -1,0 +1,17 @@
+Pour ajouter les sommes au compilateur on aurait besoin des classes :
+
+package ilp4.exam2020.compiler; Compiler extends ilp4.compiler.Compiler implements ilp4.exam2020.interfaces.IASTvisitor
+package ilp4.exam2020.compiler; FreeVariableCollector extends ilp4.compiler.FreeVariableCollector implements ilp4.exam2020.interfaces.IASTvisitor
+package ilp4.exam2020.compiler; GlobalVariableCollector extends ilp4.compiler.GlobalVariableCollector implements ilp4.exam2020.interfaces.IASTvisitor
+
+package ilp4.exam2020.compiler.normalizer; Normalizer extends ilp4.compiler.normalizer.Normalizer implements ilp4.exam2020.interfaces.IASTvisitor
+package ilp4.exam2020.compiler.normalizer; INormalizationFactory extends ilp4.compiler.normalizer.INormalizationFactory
+package ilp4.exam2020.compiler.normalizer; NormalizationFactory extends ilp4.compiler.normalizer.NormalizationFactory implements ilp4.exam2020.compiler.normalizer.INormalizationFactory
+
+package ilp4.exam2020.compiler.interfaces; IASTCsum extends ilp4.exam2020.interfaces.IASTsum
+package ilp4.exam2020.compiler.interfaces; IASTCfilter extends ilp4.exam2020.interfaces.IASTfilter
+
+package ilp4.exam2020.compiler.ast; ASTCsum extends ilp4.exam2020.ast.ASTsum implements ilp4.exam2020.compiler.interfaces.IASTCsum
+package ilp4.exam2020.compiler.ast; ASTCfilter extends ilp4.exam2020.ast.ASTfilter implements ilp4.exam2020.compiler.interfaces.IASTCfilter
+
+package ilp4.exam2020.compiler.test; CompilerTest extends ilp4.compiler.test.CompilerTest

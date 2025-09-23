@@ -1,0 +1,6 @@
+on utilisera une fonction ILP_is_a qui permet de verifier l'instance 
+ILP_find_method pour chercher nos method next et iterator
+ILP_invoke pour pouvoir invoker notre methode
+ILP_Boolean2ILP pour verifier est bien un boolean
+On a pas besoin d'enrichire particulierement la biblio d'execution
+
