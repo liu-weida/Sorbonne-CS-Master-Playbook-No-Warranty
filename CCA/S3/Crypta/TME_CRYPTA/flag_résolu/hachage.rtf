@@ -1,0 +1,66 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh15340\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 Python fournit par d\'e9faut une impl\'e9mentation des fonctions de hachage MD5, SHA-1,\
+SHA-224, SHA-256, SHA-384 et SHA-512. Ceci est tr\'e8s pratique.\
+\
+>>> from hashlib import sha256\
+>>> x = sha256('UGLIX'.encode())\
+>>> x.digest()\
+b')\\rm\\x9b\\xb6\\xdd\\xe4\\xb8\\r\\tQZ\\x90\\xfd\\xbd\\x15Y\\xad\\x8b\\xec;yfd\\x11\\x1f@\\xa2N5"\\xdb'\
+>>> x.hexdigest()\
+'290d6d9bb6dde4b80d09515a90fdbd1559ad8bec3b796664111f40a24e3522db'\
+\
+Attention, il faut fournir des bytes(), donc ne pas oublier d'encoder les str().\
+Cf. la documentation sur les cha\'eenes de caract\'e8res pour plus de pr\'e9cisions.\
+\
+Il n'est pas obligatoire de fournir les donn\'e9es \'e0 hacher en une seule fois.\
+>>> x = sha256('UGLIX rocks'.encode())\
+>>> y = sha256()\
+>>> y.update('UGLIX'.encode())\
+>>> y.update(' rocks'.encode())\
+>>> x.digest() == y.digest()\
+True\
+\
+\
+Les sp\'e9cifications cryptographique indiquent parfois qu'il faut hacher la\
+concat\'e9nation de plus donn\'e9es, par exemple avec des notations du type :\
+    \
+    mac = H(Key || Message)\
+\
+Ceci peut simplement de faire comme \'e7a :\
+>>> x = sha256()\
+>>> x.update(Key)\
+>>> x.update(Message)\
+>>> mac = x.hexdigest()\
+\
+\
+CAS PARTICULIER DES ENTIERS\
+---------------------------\
+\
+Sur le campus, les conventions suivantes ont \'e9t\'e9 adopt\'e9es (apr\'e8s des d\'e9cennies de\
+debugging et d'incompatibilit\'e9 dans les API).\
+\
+*) Si on doit hacher un entier, alors on le convertit en bytes() (en produisant\
+   l'ordre "big-endian"), et on hache les bytes().\
+\
+*) Si on doit utiliser le hach\'e9 comme un entier, alors on le converti en entier\
+   selon l'ordre "big-endian".\
+\
+Se reporter \'e0 la documentation sur les entiers pour plus de d\'e9tails.\
+\
+Exemple : On calcule H(1337 || 'UGLIX'), et on r\'e9cup\'e8re le hach\'e9 comme un entier\
+\
+>>> H = sha256()\
+>>> Key = 1337\
+>>> Message = 'UGLIX'\
+\
+>>> size = 2                               # 2 octets suffisent pour le nombre 1337 \
+>>> H.update(Key.to_bytes(size, byteorder='big'))\
+>>> H.update(Message.encode())\
+>>> int(H.hexdigest(), base=16)\
+87368479139496548753041453892314973402075868428433709245093784034401128089181}

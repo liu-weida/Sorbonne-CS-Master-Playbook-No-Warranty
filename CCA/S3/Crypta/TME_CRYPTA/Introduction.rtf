@@ -1,0 +1,95 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 INTRODUCTION\
+============\
+\
+Si on ne se pla\'eet pas dans la pi\'e8ce courante, on peut simplement essayer\
+d'en SORTIR, ou bien consulter l'AIDE.\
+\
+\
+G\'c9N\'c9RATION D'UNE PAIRE DE CLEFS\
+===============================\
+Openssl permet de g\'e9n\'e9rer des paires de clefs, avec la commande : \
+    \
+    openssl genpkey <options>\
+    \
+Encore une fois, vous \'eates encourag\'e9s \'e0 consulter "man genpkey" et la \
+documentation de openssl.  Par d\'e9faut, le r\'e9sultat est envoy\'e9 sur la sortie \
+standard.  Le r\'e9sultat contient la paire de clefs, au format PEM (c'est de \
+l'ASCII) propre \'e0 openssl et un peu p\'e9nible \'e0 d\'e9coder \'e0 la main.  \
+    \
+Par exemple, pour g\'e9n\'e9rer une paire de clefs RSA de 1024 bits :\
+    \
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:1024\
+    \
+    \
+Une commande permet d'extraire la clef publique uniquement, par exemple pour \
+la communiquer \'e0 des tiers : \
+\
+    openssl pkey -in <fichier contenant la clef secr\'e8te> -pubout\
+    \
+Cf. "man pkey".\
+\
+\
+SIGNATURES\
+==========\
+OpenSSL permet d'effectuer des signatures num\'e9riques et d'en v\'e9rifier avec \
+plusieurs algorithmes, dont RSA.\
+    \
+La solution la plus courante consiste \'e0 utiliser une fonction de hachage \
+cryptographique, et \'e0 signer l'empreinte du document \'e0 authentifier.  OpenSSL \
+peut accomplir ceci automatiquement avec la commande  "openssl dgst".  Vous \'eates \
+invit\'e9s \'e0 consulter la page de manuel correspondante ("man dgst").  Par d\'e9faut, \
+avec une clef RSA, cela produit des signatures PKCS#1 v1.5.  Si la clef est une\
+courbe elliptique, alors c'est l'algorithme ECDSA qui est utilis\'e9.\
+    \
+Voici les exemples les plus pertinents :\
+    \
+Production d'une signature\
+--------------------------\
+\
+    openssl dgst -sha256 -sign secret_key.pem\
+    \
+Ceci attend les donn\'e9es \'e0 signer sur l'entr\'e9e standard, et envoie la\
+signature sur la sortie standard.  L'option -hex peut \'eatre utile.\
+    \
+V\'e9rification d'une signature\
+----------------------------\
+    \
+    openssl dgst -sha256 -verify public_key.pem -signature signature.bin\
+    \
+Ceci attend sur l'entr\'e9e standard les donn\'e9es dont "signature.bin" contient\
+une signature.\
+    \
+Les signatures sont des donn\'e9es binaires, donc on doit g\'e9n\'e9ralement les encoder,\
+par exemple en hexadecimal ou en base64 avant de pouvoir les transmettre sans \
+douleur.  L'option -hex ne permet pas de v\'e9rifier des signatures donn\'e9es en \
+hexad\'e9cimal.\
+\
+REMARQUE IMPORTANTE\
+-------------------\
+Une signature n'est valide que si les **m\'eames** donn\'e9es (pr\'e9tendument sign\'e9es)\
+sont fournies lors de la production et de la v\'e9rification de la signature.  Or,\
+lorsque l'une des deux \'e9tapes sont effectu\'e9es par un serveur distant, on ne \
+contr\'f4le pas forc\'e9ment les donn\'e9es en question.  Il faut savoir que la **majorit\'e9** \
+des \'e9diteurs de texte (vi, nano, gedit, kate, emacs, ...) ajoutent un caract\'e8re "\\n" \
+invisible \'e0 la fin de tous les fichiers.  Il est g\'e9n\'e9ralement impossible de \
+l'emp\'eacher, or ceci peut entrainer l'invalidit\'e9 des signatures.  On peut v\'e9rifier\
+si c'est le cas en faisant passer le fichier \'e0 travers le programme "xxd".  Si on\
+voit appara\'eetre un octet 0x0a \'e0 la fin, c'est le "\\n" maudit.\
+    \
+Une solution potentielle pour \'e9crire un fichier sans caract\'e8re exc\'e9dentaire \
+consiste \'e0 utiliser un petit programme du type :\
+>>> # cet exemple est en python\
+>>> f = open(FILENAME, "w")\
+>>> f.write("contenu important")   # <--- pas de \\n \'e0 la fin\
+>>> f.close()\
+\
+L'autre solution consiste \'e0 \'e9crire une fonction qui invoque directement OpenSSL,\
+par exemple avec la fonction "subprocess.run()" de la librairie standard de python.\
+}

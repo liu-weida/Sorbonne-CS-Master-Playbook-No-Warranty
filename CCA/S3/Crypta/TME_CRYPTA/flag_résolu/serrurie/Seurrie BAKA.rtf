@@ -1,0 +1,143 @@
+{\rtf1\ansi\ansicpg936\cocoartf2758
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww23380\viewh14320\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+>>> conseil serrure \
+Pour ex\'e9cuter le protocole normalement, il faudrait que vous poss\'e9diez le nombre\
+``secret'' J**d mod N, qui donne le droit d'entrer... or clairement ce n'est pas\
+le cas.\
+\
+>>> conseil serrure \
+Heureusement, la serrure contient une implantation bugu\'e9e du protocole.  On peut\
+la tromper et la convaincre d'ouvrir m\'eame sans poss\'e9der le ``secret''.\
+\
+>>> conseil serrure \
+Essayez de lancer plusieurs sessions et observez le ``d\'e9fi'' al\'e9atoire envoy\'e9 par\
+la serrure.\
+\
+>>> conseil serrure \
+Si par malheur le ``d\'e9fi'' n'\'e9tait pas al\'e9atoire mais, au contraire, pr\'e9visible,\
+alors ne pourrait-il pas y avoir un moyen simple de fabriquer une paire (x, y) qui\
+satisfait l'\'e9galit\'e9e test\'e9e par le v\'e9rifieur ?\
+\
+>>> conseil serrure \
+(Moi, je dis \'e7a, hein, je dis rien...)\
+\
+>>> conseil serrure \
+En principe, on ne devrait pas pouvoir faire \'e7a, et le protocole est cens\'e9 \'eatre\
+s\'fbr s'il est implant\'e9 correctement.  Mais l\'e0, vu que le ``d\'e9fi'' est pr\'e9visible,\
+on peut mettre en oeuvre cette entourloupe.\
+\
+>>> conseil serrure \
+C'est tout !\
+\
+ J = \
+                3164613361373635326462623865326536353734633635613831626564326434\
+                6131343330633536353765623633613439323762313132366234386630383631\
+                2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d20202020202020202020202020202020\
+                20202020202020202020202020202020202020202079696a69652e7a68656e67\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+Les serrures BAKA de haute s\'e9curit\'e9 fonctionnent de la fa\'e7on suivante.\
+\
+*) Les "clefs" (nomm\'e9s "Objects Uniques d'Identification" ---OUI--- dans \
+   cette documentation) sont des dispositifs radio qui communiquent avec la\
+   serrure (quand elles en sont suffisament proches) via la norme NFC,\
+   qui est un standard industriel utilis\'e9 par presque tous les tags RFID.\
+\
+*) Les "serrures" (nomm\'e9es "M\'e9canismes d'Ouverture Universels \'e0 Authentification\
+   Interactive S\'e9curis\'e9e" ---MOUAIS--- dans cette documentation) contiennent des \
+   donn\'e9es publiques uniquement et sont reli\'e9s \'e0 un serveur de permission.\
+\
+*) Pour ouvrir une porte, le OUI d\'e9montre au MOUAIS la connaissance d'un secret\
+   gr\'e2ce \'e0 un protocole \'e0 divulgation nulle d\'fb \'e0 Gillou et Quisquater en 1988.\
+\
+*) Les administrateurs du syst\'e8me poss\'e8dent une paire de clefs RSA.  La partie\
+   publique est not\'e9e (N, e) et la partie secr\'e8te est not\'e9e d.\
+   \
+*) Chaque utilisateur a une "identit\'e9" not\'e9e I.  C'est une cha\'eene de caract\'e8res\
+   de 48 octets form\'e9e de son nom d'utilisateur (tronqu\'e9 \'e0 48 octets s'il est \
+   trop long ou bourr\'e9 avec des espaces s'il est trop court).  Les utilisateurs\
+   en d\'e9duisent une identit\'e9 redondante de 128 caract\'e8res form\'e9e par \
+   J := hex(SHA256(I)) || '----------------' || I.\
+\
+*) Lors de son enr\'f4lement dans le syst\'e8me, chaque utilisateur re\'e7oit un OUI qui\
+   contient N, e, J ainsi que S := J**d mod N --- S est le "secret" qui permet\
+   au MOUAIS d'authentifier le OUI.\
+\
+*) Lorsqu'un OUI est mis en contact avec un MOUAIS, le OUI g\'e9n\'e8re un nombre\
+   al\'e9atoire r modulo N, calcule x := r**e mod N puis envoie (J, x) au MOUAIS.\
+\
+*) Le MOUAIS v\'e9rifie si J est correctement form\'e9 et si l'utilisateur est \
+   autoris\'e9 \'e0 franchir la porte.  Si ce n'est pas le cas, le MOUAIS r\'e9pond "NON".\
+   Sinon, il choisit un nombre al\'e9atoire c modulo N puis envoie c au OUI.\
+\
+*) Le OUI calcule y := r * S**c mod N et transf\'e8re y au MOUAIS.\
+\
+*) Le MOUAIS v\'e9rifie que y != 0 mod N et que y**e == x * J**c mod N.  Si ce\
+   n'est pas le cas, le MOUAIS r\'e9pond "NON".  Sinon, la porte s'ouvre.\
+\
+La clef publique du syst\'e8me est :\
+\
+    e = 0x10001\
+    N = 0xba4530d0c5d4094f4557699683a69dcac790935e0d8ed82451920f73b7c05c08\
+          73e8a9650020f1a1783e7256237a10e37f27762808e651ac5348a2a7f4d5c073\
+          d0350ba88525f96eec5e8974012a0241c0564af6f1e58a1f52c93c7446742deb\
+          1815ffcc3d21fb5141d1d765662b14d5089a3a647749ad7be7175f4eed215327\
+\
+Voici un exemple d'authentification r\'e9ussie pour le OUI appartenant \'e0 un\
+utilisateur de test fictif.\
+\
+I = 'testuser'\
+J = '4d27f89bbcaf897ee4133ab05584d51ae88ebe226562f71876ad2c0bf08ba214' + \\\
+    '----------------                                        testuser'\
+\
+J est repr\'e9sent\'e9 par l'entier \
+\
+    0x3464323766383962626361663839376565343133336162303535383464353161\
+      6538386562653232363536326637313837366164326330626630386261323134\
+      2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d20202020202020202020202020202020\
+      2020202020202020202020202020202020202020202020207465737475736572\
+\
+On a :\
+\
+S = 0x68c332cf90d38cb85c1dcd8904cbe09c067262dd9fd7117e27404167c1016c1c\
+      43af8f73e6746fc219c2bfbf89191ef1bd82eb97f0ec5a0bddd73f95390f6ac0\
+      20faa64f49ac65fe57bc1b958f08867be9e53eec6de64a072c73c8a6cef529f1\
+      2b28a371c73055014866142c7dcd27d0645c78f9d6e362747cb22c472579411b\
+      \
+Le OUI choisi\
+\
+r = 0x16e3bd60202b8f3546b8d637e92a4a9b29c23de0ac163ac64d26baeed6cdf8f1\
+      2f62a953c57633e6a162a31b59049c5ae0c20009d461ab3130a5de4cc8692bb9\
+      c3eefa40e12912beb7fff3df41af442f1707538a765975926f320f189036db98\
+      15cba775fe987a7ba9a8ab030f76dd398d7f2454f11ae37336695fc2d97d5d12\
+\
+puis calcule\
+\
+x = 0x5560d93db277512db0c08ad018c638305c96aac5be9b5398199be208d312c176\
+      0381b936d97d155c03e86eb791c244bc3045613a5669dc689a87ddbe1d2b6480\
+      696630cb6c05cf9384c96ff390f195e9827d41d9388f3f495bf307a11419c9f2\
+      c8ff62036d635a90daebc9faf821c8517b5696d225ab7511337b267584b3ccfb\
+\
+Le MOUAIS choisi\
+\
+c = 0x30c3c6edacc41e7754e61d1cea5cac83218ad97743ce3c1b6cbdf32a966f27c7\
+      d541f1ba646845ad65707bfe58a57816c1191b210b59cd8ec036599bcecb38e7\
+      09f08fd4d7682c56d524085b92b6836672b6d4f1e00396b454828f1ccf4d2e5b\
+      d40c00e2a3d3d7dd5ab8bc9e4a00dc71dbefb7f8474828c074dc468ddcafaaa2\
+\
+Le OUI calcule\
+\
+y = 0x98907f2b1f8eda96a103657a6bd030cecb205cc37ba803b3aec4ebfe267d471e\
+      551d96a63825c33a5ad7faf23395a76b0267ab79c93e058c40fd6368a1f4c828\
+      fe298cff281775519f35dab8f2c45b1ad29cbc92935b8906367d9019cbd66046\
+      e53cf6bc68c231a4f346897bc6aad06142a55ede06cd90a5adee4cf2e6fcefce\
+\
+}

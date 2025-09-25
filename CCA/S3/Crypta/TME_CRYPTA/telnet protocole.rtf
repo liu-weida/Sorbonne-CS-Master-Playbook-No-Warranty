@@ -1,0 +1,124 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 Vous \'eates dans le rayon "Telnet & MUSSH" de la biblioth\'e8que MIR.\
+\
+Ici se trouve une sp\'e9cification du protocole MUSSH.\
+Ici se trouve un guide strat\'e9gique pour implanter le protocole MUSSH.\
+Ici se trouve un tutoriel pour implanter un client MUSSH en python.\
+\
+>>> lire guide\
+GUIDE STRAT\'c9GIQUE POUR LA R\'c9ALISATION DE CLIENTS MUSSH\
+======================================================\
+\
+Le comit\'e9 technique HUSH de l'University Engineering Task Force (UETF) recommande\
+que les impl\'e9menteurs de clients MUSSH suivent l'une des des trois strat\'e9gies\
+suivantes.\
+\
+\
+STRAT\'c9GIE N\'b01 : R\'c9ALISER UN PROXY\
+---------------------------------\
+    Il s'agit d'\'e9crire un programme qui impl\'e9mente le c\'f4t\'e9 "client" de la couche\
+    de chiffrement authentifi\'e9. Ce programme \'e9change localement des octets avec\
+    la couche TELNET (amont) d'une part; il \'e9change des octets sur le r\'e9seau\
+    avec le c\'f4t\'e9 "serveur" de la couche de chiffrement authentifi\'e9 d'autre part.\
+\
+    Pour ce faire :\
+    0. L'utilisateur lance le proxy sur la machine cliente.\
+    1. Le proxy ouvre un port TCP (disons le port 4242) sur la machine cliente.\
+    2. Le proxy se connecte au serveur de l'universit\'e9 sur le port TCP 6025.\
+    3. L'utilisateur dirige son client telnet sur le port 4242 de la machine\
+       locale.\
+    4. Le proxy effectue l'\'e9change de clef, le chiffrement / d\'e9chiffrement, de\
+       mani\'e8re transparente pour la couche TELNET en amont.\
+\
+    \
+        Avantage : le proxy peut \'eatre r\'e9alis\'e9 dans n'importe quel langage, avec\
+                   n'importe quelle librairie externe. N'importe quel client \
+                   TELNET peut \'eatre utilis\'e9.\
+    Inconv\'e9nient : mise en oeuvre un peu plus lourde c\'f4t\'e9 utilisateur.\
+\
+    Un proxy open-source en python est disponible dans les bonnes biblioth\'e8ques.\
+\
+\
+STRAT\'c9GIE N\'b02 : \'c9CRIRE SON PROPRE CLIENT "FROM SCRATCH"\
+-------------------------------------------------------\
+    Il s'agit d'impl\'e9menter compl\'e8tement un client pour le protocole TELNET, ainsi\
+    que la couche de chiffrement authentifi\'e9 dans le client "officiel".\
+\
+        Avantage : simple \'e0 utiliser pour l'utilisateur. Flexibilit\'e9 maximale.\
+    Inconv\'e9nient : mise en oeuvre lourde. Il faut comprendre le protocole TELNET.\
+\
+\
+STRAT\'c9GIE N\'b03 : MODIFIER UN CLIENT OPEN-SOURCE\
+----------------------------------------------\
+    Il s'agit d'impl\'e9menter directement la couche de chiffrement authentifi\'e9\
+    dans le client "officiel". Pour cela, un guide \'e0 part est fourni.\
+    \
+\
+        Avantage : plus simple pour l'utilisateur final.\
+    Inconv\'e9nient : flexibilit\'e9 moindre ; il faut comprendre le fonctionnement du\
+                   client open-source programmer en python, et utiliser la \
+                   librairie twisted.\
+\
+\
+CONSEILS POUR LA MISE AU POINT\
+------------------------------\
+    La r\'e9alisation directe d'un client MUSSH est un exercice de programmation\
+    non-trivial. Pour facilier la mise au point, deux protocoles interm\'e9diaires\
+    sont impl\'e9ment\'e9s par le serveur de l'universit\'e9. Leur utilisation dans la vie \
+    de tous les jours n'est PAS recommand\'e9e, car ils n'offrent pas la m\'eame \
+    s\'e9curit\'e9 que le protocole MUSSH.\
+\
+\
+PROTOCOLE "TELNET OVER NETSTRINGS"\
+----------------------------------\
+    La r\'e9alisation d'un client pour ce protocole garantit la r\'e9alisation\
+    correcte de la couche "NETSTRINGS".  Il s'agit d'intercaler un "emballage" en\
+    netstrings entre le client et le serveur telnet.  Aucun chiffrement n'est\
+    r\'e9alis\'e9.  Ce protocole est disponible sur le port 6023 du serveur de \
+    l'universit\'e9.\
+\
+                                                               \uc0\u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488 \
+                                                               \uc0\u9474  Terminal \u9474 \
+                                                               \uc0\u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9516 \u9472 \u9472 \u9472 \u9472 \u9496 \
+      Couche TELNET                                                  \uc0\u9474 \
+    \uc0\u9556 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9578 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9559 \
+    \uc0\u9553                                                                 \u9474          \u9553 \
+    \uc0\u9553                                                         \u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9524 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488  \u9553 \
+    \uc0\u9553                                                         \u9474  client telnet \u9474  \u9553 \
+    \uc0\u9553                                                         \u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9516 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496  \u9553 \
+    \uc0\u9553     Couche NETSTRINGS                                           \u9474          \u9553 \
+    \uc0\u9553  \u9556 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9578 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9559  \u9553 \
+    \uc0\u9553  \u9553                                                               \u9474        \u9553  \u9553 \
+    \uc0\u9553  \u9553                                                               \u9474        \u9553  \u9553 \
+    \uc0\u9553  \u9553  \u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488                                           \u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9524 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488  \u9553  \u9553 \
+    \uc0\u9553  \u9553  \u9474  Netstring \u9500 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9548 \u9508  Netstring \u9474  \u9553  \u9553 \
+    \uc0\u9553  \u9553  \u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9516 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496                                           \u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496  \u9553  \u9553 \
+    \uc0\u9553  \u9553        \u9474                                                               \u9553  \u9553 \
+    \uc0\u9553  \u9553        \u9474                                                               \u9553  \u9553 \
+    \uc0\u9553  \u9562 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9578 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9565  \u9553 \
+    \uc0\u9553          \u9474                                                                 \u9553 \
+    \uc0\u9553  \u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9524 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488                                                        \u9553 \
+    \uc0\u9553  \u9474  serveur telnet \u9474                                                        \u9553 \
+    \uc0\u9553  \u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9516 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496                                                        \u9553 \
+    \uc0\u9553          \u9474                                                                 \u9553 \
+    \uc0\u9562 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9578 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9565 \
+              \uc0\u9474 \
+          \uc0\u9484 \u9472 \u9472 \u9472 \u9524 \u9472 \u9472 \u9472 \u9488 \
+          \uc0\u9474  Shell \u9474 \
+          \uc0\u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496 \
+\
+    \
+PROTOCOLE "ENCRYPTED TELNET OVER NETSTRINGS"\
+--------------------------------------------\
+    La r\'e9alisation d'un client pour ce protocole garantit la r\'e9alisation\
+    correcte de la couche de chiffrement authentifi\'e9. Il s'agit du protocole\
+    MUSSH, sauf que l'\'e9change de clef Diffie-Hellman n'est pas effectu\'e9. \'c0 la\
+    place les six clefs sym\'e9triques du protocole de chiffrement authentifi\'e9 sont\
+    chacune form\'e9es de seize octets z\'e9ro. Ce protocole est disponible sur le\
+    port 6024 du serveur de l'universit\'e9.}

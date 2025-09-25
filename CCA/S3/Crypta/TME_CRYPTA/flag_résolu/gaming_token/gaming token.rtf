@@ -1,0 +1,157 @@
+{\rtf1\ansi\ansicpg936\cocoartf2758
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww22080\viewh15280\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 JEUX VID\'c9O SUR LE CAMPUS\
+========================\
+\
+Plusieurs \'e9tudes ont d\'e9montr\'e9 que le stress r\'e9duisait le niveau acad\'e9mique des\
+\'e9tudiantes et des \'e9tudiants.  Par cons\'e9quent, la direction de la facult\'e9 des\
+sciences a men\'e9 plusieurs exp\'e9riences pour am\'e9liorer l'exp\'e9rience universitaire\
+des apprenants.  Des statistiques ont \'e9t\'e9 collect\'e9es pour tester l'efficacit\'e9 de \
+diverses mesures :\
+- suppression des examens (p = 0.37, non-concluant)\
+- distribution de LSD (p = 0.63, non-concluant)\
+- menus am\'e9lior\'e9s \'e0 la cantine (p=0.07, presque significatif)\
+- installation d'\'e9quipements sportifs en libre acc\'e8s (p=0.15, peu significatif)\
+- installation de bornes d'arcade (p=0.017, statistiquement significatif)\
+\
+Au vu de ces r\'e9sultats, l'universit\'e9 a d\'e9cid\'e9 de d\'e9ployer \'e0 grands frais un \
+r\'e9seau de bornes d'arcade innovantes.\
+\
+Pour les utiliser, il faut fournir un "gaming token" (c'est une exigence de la \
+soci\'e9t\'e9 qui les loue \'e0 l'universit\'e9).  Un distributeur automatique de "gaming \
+token" a lui aussi \'e9t\'e9 install\'e9.\
+\
+\
+Gaming Tokens\
+-------------\
+Un "gaming token" est constitu\'e9 de trois champs :\
+- Le nom de l'utilisateur\
+- Deux chaines X, Y de 16 octets\
+- Une signature des deux champs pr\'e9c\'e9dents par le distributeur\
+\
+Pour \'eatre valide, un "gaming token" doit :\
+- Avoir une signature valide\
+- Avoir le bon nom d'utilisateur\
+- Il doit exister une clef K de 128 bits telle que :\
+  - X est le chiffr\'e9 de 0x00000000000000000000000000000000 par l'AES avec K\
+  - Y est le chiffr\'e9 de 0xffffffffffffffffffffffffffffffff par l'AES avec K\
+\
+La clef K doit rester confidentielle --- l'utilisateur n'a pas \'e0 la r\'e9v\'e9ler.\
+\
+\
+Distributeur de Gaming Tokens\
+-----------------------------\
+Le distributeur permet aux utilisateurs d'obtenir un Gaming Token sur\
+pr\'e9sentation de leur carte d'\'e9tudiant.  Le distributeur certifie que les\
+Gaming Tokens sont valides avec forte probabilit\'e9, alors que les clefs\
+restent confidentielles.  Ceci est r\'e9alis\'e9 grace \'e0 une proc\'e9dure de \
+"cut-and-choose".  Celle qui est implant\'e9e sur le campus est relativement\
+classique ; elle garantit que les Gaming Tokens obtenus sont corrects avec\
+probabilit\'e9 sup\'e9rieure \'e0 99,9%.  Elle incorpore une optimisation commune :\
+l'utilisation d'un ``arbre de de PRNGs'' pour r\'e9duire les communication de \
+O(n) \'e0 O(log n).\
+\
+Le protocole pour obtenir un "Gaming Token" se d\'e9roule en trois phases :\
+    \
+1. Mise en Gage\
+   ### L'utilisateur g\'e9n\'e8re 1024 paires al\'e9atoires K[0], ..., K[1023] avec un \
+   ### "arbre de PRNGs" puis il les met en gage\
+   - L'utilisateur choisit une graine <seed>\
+   - A[1] <--- <seed>\
+   - Pour 1 <= i < 1024 faire:\
+     - A[2*i] <--- SHA256(A[i])[0:16]\
+     - A[2*i + 1] <--- SHA256(A[i])[16:32]\
+   - Pour 0 <= i < 1024 faire:\
+     - K[i] <--- A[i + 1024]\
+     - X[i] <--- AES(K[i], 0x00000000000000000000000000000000)\
+     - Y[i] <--- AES(K[i], 0xffffffffffffffffffffffffffffffff)\
+   - Commitment <--- SHA256(X[0] || Y[0] || X[1] || Y[1] || ...)\
+                     # empreinte de la concat\'e9nation de toute les paires\
+   - <commitment> est transmis au distributeur\
+\
+2. D\'e9fi\
+   ### Le distributeur choisit UNE paire i (0 <= i < 1024)\
+\
+3. Ouverture\
+   ### L'utilisateur r\'e9v\'e8le X[i] et Y[i] ainsi que K[j] pour j != i.\
+   ### Le distributeur v\'e9rifie la correction de X[j] et Y[j] (pour j!= i).\
+   ### Pour cela, l'utilisateur r\'e9v\'e8le le "co-chemin" qui va de la i-\'e8me paire \
+   ###   jusqu'\'e0 la racine dans l'arbre de PRNGs.  Ceci permet de v\'e9rifieur de\
+   ###   recalculer tous les K[j] pour j != i.\
+   - X[i] et Y[i] sont transmis au distributeur\
+   - path <--- []\
+   - j <--- i + 1024\
+   - Pour 0 <= k < 10:\
+     - Ajouter A[j XOR 1] \'e0 la fin de path\
+     - j <--- j // 2 \
+   - Transmettre <path> au distributeur\
+\
+EXEMPLE\
+-------\
+\
+Avec :\
+\
+<seed> = 00112233445566778899aabbccddeeff\
+\
+On obtient :\
+\
+A[   1] = 00112233445566778899aabbccddeeff\
+A[   2] = a8faed6abbf35c12a4b26e40f6feb19d\
+A[   3] = 736d90045c83b9f9a31f638d323e6811\
+A[   4] = 3c1acfd8750755dc39c3ed988bec2af9\
+A[   5] = 01babca312bbe3227fb2d5888cfe1d37\
+A[   6] = 34cfff2978a6636bb4c09f12e83a0dc6\
+A[   7] = 5483165ca3819e14ce80b9d2b5e57ba1\
+A[   8] = 22e971e1c044854462c40d604937a3bd\
+A[   9] = f6fbec857082fd37300df9abebf8724a\
+A[  10] = eab3e41cab29c0ce5e2ccc8999d937b9\
+...\
+A[2044] = cbaaf237dbc50e2d7da9ca86d131bfb9\
+A[2045] = 6e77f0dfa843c65772424341ad5efd35\
+A[2046] = 5df411bb7fe356cc4dc1ba2e015f4145\
+A[2047] = 43607a1c4fa2321cf1e53e951be06eaa\
+\
+K[   0] = 82b1b3e46a145d137dc78cdd2e6a897b\
+X[   0] = 2453edeba9fbe3095b07f1d33fa631d4\
+Y[   0] = 3070eaddba8604bd1527a718a8160057\
+...\
+K[  42] = 21ae7ef7dbe8564633c3cb6fda2ae176\
+X[  42] = b48bf89eca0365dfe2dcc8567f44bcc2\
+Y[  42] = 1bddf510f4008e9da4bd0db34897bf0e\
+...\
+K[1023] = 43607a1c4fa2321cf1e53e951be06eaa\
+X[1023] = d69c93ce5224175e19fe0d8d0c759549\
+Y[1023] = afece0e4b45cd0f7f8853ed5ebcf1cc4\
+\
+Les donn\'e9es qui sont hach\'e9es pour produire la mise en gage occupent 32768 octets :\
+\
+2453edeba9fbe3095b07f1d33fa631d4 3070eaddba8604bd1527a718a8160057\
+3fb55b29afac62d477daff0e50d14366 48ecedf0257de354254e0842de6979a1\
+...\
+d69c93ce5224175e19fe0d8d0c759549 afece0e4b45cd0f7f8853ed5ebcf1cc4\
+\
+Et donc\
+\
+<commitment> = 6fb39c6d7d6c27375e4a23b3ae49925a08ce5047ce75cfc70cfab836f8c12f74\
+\
+Le ``challenge'' est <i> = 42.\
+\
+Ouvrir la mise en gage revient \'e0 r\'e9v\'e9ler X[42], Y[42], ainsi que le ``co-chemin'' \
+depuis la feuille correspondante de l'arbre de PRNG jusqu'\'e0 la racine.  Dans \
+notre exemple, la feuille en question de l'arbre de PRNG porte le num\'e9ro 1066.\
+Le chemin qui la relie \'e0 la racine est : A[i] pour  i = 1066, 533, 266, 133, 66, \
+33, 16, 8, 4, 2.  Donc le ``co-chemin'' (la s\'e9quence form\'e9e par le fr\'e8re de \
+chacun des noeuds pr\'e9c\'e9dents) est A[j] avec j = 1067, 532, 267, 132, 67, 32, 17,\
+9, 5, 3.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+Signature: 3036021900A1E0900BD1DBC97DCBF138C1DCFD61F9842E7B8190DBF22C021900A5779EE74D28C83C3350048C1C99F072992DB7D8B91ECC5E\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\
+\
+}

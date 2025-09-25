@@ -1,0 +1,110 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 \'91(((\'91Car c Une chaine de caract\'e8re est une s\'e9quence de caract\'e8res.  La fa\'e7on dont\
+ces caract\'e8res sont repr\'e9sent\'e9s par des s\'e9quences de bits est decrite\
+par un syst\'e8me d'encodage.  Il en existe de nombreux, et ils sont bien\
+s\'fbr tous incompatibles entre eux.  Certains ne permettent pas de\
+repr\'e9senter tous les caract\'e8res.  Par exemple, l'encodage ISO-8859-1\
+(a.k.a.  latin-1) code les caract\'e8res sur un octet.  Il est bien adapt\'e9\
+au monde occidental, mais ne contient pas les signes asiatiques, par\
+exemple.  Le KOI8-R, lui, permet de repr\'e9senter les caract\'e8res\
+cyrilliques, etc.\
+\
+Le syst\'e8me unicode, lui, permet de repr\'e9senter la plupart des\
+caract\'e8res connus, mais il n'est pas tr\'e8s compact (4 octets par\
+caract\'e8res).  Repr\'e9senter des chaines de caract\'e8res comme des s\'e9quences\
+de caract\'e8res unicode offre l'avantage de faire dispara\'eetre tous ces\
+ennuyeux probl\'e8mes d'encodage.  C'est le choix des concepteurs de\
+Python.  Dans ce langage, une chaine de caract\'e8re (un objet de type\
+"str") est repr\'e9sent\'e9e en m\'e9moire dans le syst\'e8me unicode.\
+\
+Il existe aussi en python un autre type de chaine, les objets de type\
+"bytes".  Il s'agit d'une simple s\'e9quence d'octets, comparable aux\
+tableaux de type char qu'on a dans le langage C.\
+\
+>>> type("toto")\
+<class 'str'>\
+\
+>>> type(bytes([0, 1, 2]))\
+<class 'bytes'>\
+\
+\
+Tout ceci a deux cons\'e9quences.\
+\
+A) Traitement du texte\
+----------------------\
+\
+Les programmeurs doivent se soucier de ces probl\'e8mes d'encodage lorsqu'ils\
+doivent transformer des chaines de caract\'e8res en s\'e9quences d'octets, par\
+exemple pour les \'e9crire dans un fichier, les envoyer sur le r\'e9seau, ou les\
+transmettre \'e0 un autre programme (comme openssl...).  Par d\'e9faut dans python,\
+les chaines unicodes sont encod\'e9es en UTF-8 lors de leur conversion en\
+s\'e9quences d'octets, par exemple lors de leur envoi sur le r\'e9seau.\
+\
+En python, les chaines unicodes ont une m\'e9thode "encode", qui prend en\
+argument un encodage (la valeur par d\'e9faut est "utf-8").\
+\
+>>> 'toto'.encode()\
+b'toto'\
+\
+>>> 'a\'eflle'.encode()\
+b'a\\xc3\\xaflle'\
+\
+Quand ils sont affich\'e9s, les objets de type byte sont pr\'e9fix\'e9s par la\
+lettre 'b'.  Ils poss\'e8dent, eux, ont une m\'e9thode "decode", qui prend\
+aussi en argument un encodage (utf8 par d\'e9faut).\
+\
+>>> b'\\xc3\\xa0 V\\xc3\\xa4\\xc3\\xafn\\xc3\\xb6'.decode()\
+'\'e0 V\'e4\'efn\'f6'\
+\
+Par exemple, une situation o\'f9 l'encodage appara\'eet explicitement\
+concerne l'utilisation de openssl.  Il est n\'e9cessaire d'encoder les\
+chaines de caract\'e8res unicode avant de les envoyer \'e0 openssl, et \
+il est n\'e9cessaire de les d\'e9coder en sortie de openssl (lors du \
+d\'e9chiffrement) pour r\'e9cup\'e9rer de l'unicode.\
+\
+B) Traitement des donn\'e9es binaires\
+----------------------------------\
+\
+Il est parfois n\'e9cessaire d'envoyer ou de recevoir des requ\'eates\
+contenant des donn\'e9es binaires, qui ne sont pas interpr\'e9tables comme\
+des chaines de caract\'e8res (il y a en effet des s\'e9quences d'octets qui\
+sont des encodages invalides en UTF-8, et qui sont donc rejet\'e9es lors\
+du d\'e9codage).  Par exemple :\
+\
+>>> s = bytes([5*i*i & 0xff for i in range(10)])\
+>>> s.decode()\
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb4 in position 6: invalid start byte\
+\
+Du coup, ce genre de donn\'e9es ne peut pas \'eatre transmis \'e0 un \'e9mulateur de \
+terminal, car le d\'e9codage serait probl\'e9matique.  Pour contourner cette\
+difficult\'e9, il faut encoder les bytes() en quelque chose qui soit du texte\
+acceptable, pour en faire une str().  Sur le campus, on utilise g\'e9n\'e9ralement \'e0\
+cette fin l'encodage en hexadecimal : les s\'e9quences d'octets sont d\'e9coup\'e9es en\
+paquets de 8 bits, et chaque paquet est converti en deux lettres.\
+\
+Pour ceci, on fait appel aux fonctions b16encode et b16decode du\
+module base64.  Voici un exemple\
+\
+>>> import base64\
+>>> base64.b16encode(s)\
+b'0005142D507DB4F54095'\
+\
+\
+Notez qu'on r\'e9cup\'e8re des "bytes".  Mais ceux-l\'e0, on peut les convertir\
+en texte sans douleur.\
+\
+>>> b'0005142D507DB4F54095'.decode()\
+'0005142D507DB4F54095'\
+\
+\
+Ceci est particuli\'e8rement utile \'e0 plusieurs reprises.  En particulier,\
+dans openssl, les signatures sont du charabia binaire, et il faut les \
+encoder/d\'e9coder de mani\'e8re ext\'e9rieure \'e0 openssl.\
+\
+}

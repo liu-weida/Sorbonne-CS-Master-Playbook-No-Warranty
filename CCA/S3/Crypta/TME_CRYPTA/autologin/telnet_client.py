@@ -1,0 +1,481 @@
+""" 
+Python telnet plugin update client v1.0. Copyright (C) LIP6
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; By running this program you implicitly agree
+that it comes without even the implied warranty of MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE and you acknowledge that it may 
+potentially COMPLETELY DESTROY YOUR COMPUTER (even if it is unlikely), 
+INFECT IT WITH A VERY NASTY VIRUS or even RUN ARBITRARY CODE on it. 
+See the GPL (GNU Public License) for more legal and technical details.
+"""
+import json
+import uuid
+
+from twisted.internet import protocol, defer
+
+PLUGIN = b'U'
+PLUGIN_DATA = bytes([0])
+PLUGIN_CODE = bytes([1])
+
+class Dispatcher(protocol.Protocol):
+    """
+    This class extends the LIP6 telnet client to support ``plugins''.
+    Plugins written by h4x0rz can communicate with university web-services
+    using a variant of json-RPC. This class encapsulates most of the RPC
+    mechanism. It is for internal use.  Plugin developpers should use the
+    Plugin class below.
+    """
+    def __init__(self, transport):
+        self.transport = transport
+        self.dispatch = {}
+
+    def dataReceived(self, msg):
+        try:
+            answer = json.loads(msg)
+        except:
+            return   # malformed JSON
+        if "jsonrpc" not in answer or answer["jsonrpc"] != "2.0":
+            return   # drop bogus message
+        request_id = answer["id"]
+        if request_id not in self.dispatch:
+            return   # invalid id
+        deferred = self.dispatch[request_id]
+        del self.dispatch[request_id]
+        if "error" not in answer and "result" not in answer:            
+            return
+        if "error" in answer:
+            deferred.errback(answer["error"])
+        if "result" in answer:
+            deferred.callback(answer["result"])
+
+    def send(self, payload):
+        self.transport.requestNegotiation(PLUGIN, payload.encode())
+
+    def call(self, method, error_handler, **kwds):
+        """
+        Invoke a remote method. Returns a Deferred that fires with the result.
+        """
+        args = {"jsonrpc": "2.0", "method": method, "params": kwds}
+        request_id = str(uuid.uuid4())
+        args["id"] = request_id
+        result = defer.Deferred()
+        result.addErrback(error_handler)
+        self.dispatch[request_id] = result
+        self.send(json.dumps(args))
+        return result
+
+class Plugin:
+    """
+    Base class for ``plugins'' (actual plugins must inherit from this).
+    Contains helper methods that perform Remote Procedure Call (RPC)
+    to web-services of the university.    
+    """
+    def __init__(self, dispatcher):
+        self.dispatcher = dispatcher
+
+    @staticmethod
+    def default_error_handler(failure):
+        """
+        Invoked if an RPC returns an error. Print the error.
+        """
+        d = failure.value
+        print(f"RPC ERROR (code={d['code']}): {d['message']}")
+
+    async def rpc(self, method, **kwds):
+        """
+        Initiate an RPC, wait for the response and return it.
+        The extra named arguments (in **kwds) are sent to the remote method.
+        This is a coroutine (async def). It must be awaited.
+        """
+        dispatcher = self.dispatcher
+        deferred = dispatcher.call(method, error_handler=self.default_error_handler, **kwds)
+        result = await deferred
+        return result
+
+
+    async def main(self):
+        """
+        Invoked when the user thinks about the plugin.
+        This is a coroutine.
+        """
+        raise NotImplementedError("You must actually implement the plugin")
+
+
+class ServiceDiscovery(Plugin):
+    """
+    Think: #! ServiceDiscovery
+    """
+    async def main(self):
+        print()
+        print("Available Remote Services")
+        print("-------------------------")
+        result = await self.rpc("service.list")
+        for (name, description) in result:
+            print(f"- {name}")
+            print(description)
+            print()
+"""
+Python telnet client v1.2. Copyright (C) LIP6
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; By running this program you implicitly agree
+that it comes without even the implied warranty of MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE and you acknowledge that it may
+potentially COMPLETELY DESTROY YOUR COMPUTER (even if it is unlikely),
+INFECT IT WITH A VERY NASTY VIRUS or even RUN ARBITRARY CODE on it.
+See the GPL (GNU Public License) for more legal and technical details.
+"""
+
+import atexit
+import sys
+import os
+from threading import Thread
+import shutil
+import struct
+import tty
+import termios
+import time
+import signal
+import zlib
+import platform
+
+# importing local script
+import autoLogin
+
+# added according to
+# Tuto_implant_client_MUSSH_python.txt
+from netstrings import NetstringWrapperProtocol
+
+"""
+This is a rudimentary telnet client. It has few features, but it
+implements a non-standard extension that improves the students experience.
+"""
+
+try:
+    from twisted.internet.protocol import ClientFactory
+    from twisted.internet import reactor
+    from twisted.internet.error import ConnectionDone
+    from twisted.conch.telnet import TelnetProtocol, TelnetTransport, IAC, IP, LINEMODE_EOF, ECHO, SGA, MODE, LINEMODE, NAWS
+except ImportError:
+    print("Ce client python dépend du module ``twisted''. Pour l'installer, faites :")
+    print("        python3 -m pip install --user twisted")
+    print("Puis ré-essayez de lancer ce programme.")
+    sys.exit(1)
+
+BINARY = bytes([0])
+PLUGIN = b'U'
+PLUGIN_DATA = bytes([0])
+PLUGIN_CODE = bytes([1])
+TTYPE = bytes([24])
+TTYPE_IS = bytes([0])
+TTYPE_SEND = bytes([1])
+CHALL_SIGN = "init"     # stores the signature result
+
+
+class TelnetClient(TelnetProtocol):
+    def connectionMade(self):
+        """
+        This function is invoked once the connection to the telnet server
+        is established.
+        """
+        # negociate telnet options
+        self.transport.negotiationMap[LINEMODE] = self.telnet_LINEMODE
+        self.transport.negotiationMap[PLUGIN] = self.telnet_PLUGIN
+        self.transport.negotiationMap[TTYPE] = self.telnet_TTYPE
+        try:
+            self.dispatcher = Dispatcher(self.transport)
+        except NameError:
+            self.dispatcher = None
+        self.transport.will(LINEMODE)
+        self.transport.do(SGA)
+        self.transport.will(NAWS)
+        self.transport.will(TTYPE)
+        self.NAWS()
+        self._start_keyboard_listener()
+        
+        # pre-login actions
+        # auto-input actions to start login process
+        time.sleep(0.5)
+        self.transport.write(b'ascenseur\n')
+        time.sleep(0.5)
+        self.transport.write(b'\n')
+        time.sleep(0.5)
+        self.transport.write(b'technique\n')
+        time.sleep(0.5)
+        self.transport.write(b'automate\n')
+        time.sleep(0.5)
+        self.transport.write(b'1\n')
+        time.sleep(0.5)
+        # TODO : replace by your ID
+        self.transport.write(b'yijie.zheng\n')
+        
+        
+    def dataReceived(self, data):
+        """
+        Invoked when data arrives from the server. We just print it.
+        """
+        sys.stdout.buffer.write(data)
+        sys.stdout.flush()
+        
+        # get string data to analyse it
+        scan = str(data)
+        
+        # intercept the login challenge, then compute the signature
+        if "Challenge:" in scan:
+            # computing signature using 'autoLogin.py', and storing it in global var
+            global CHALL_SIGN
+            CHALL_SIGN = autoLogin.autoSign(str(data)[31:60])
+        
+        # intercept the signature challenge, and auto-input the signature
+        if "Signature:" in scan:
+            time.sleep(0.1)
+            self.transport.write(CHALL_SIGN.encode()[2:134])
+            time.sleep(0.1)
+            self.transport.write(b'\n')
+            
+        # intercept post login validation, then auto-input the post-login actions
+        # here we close the login screen, and then get all the items in the game
+        if "Successful login." in scan:
+            time.sleep(0.1)
+            self.transport.write(b'\n')
+            time.sleep(0.1)
+            self.transport.write(b'\n')
+            time.sleep(0.1)
+            self.transport.write(b'3\n')
+            time.sleep(0.5)
+            self.transport.write(b'\n')
+            time.sleep(0.1)
+            self.transport.write(b'Q\n')
+            time.sleep(0.5)
+            self.transport.write(b'prendre downloader\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre chargeur\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre carte micro-SD\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'ascenseur\n')
+            time.sleep(0.1)
+            self.transport.write(b'\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'26\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'est\n')
+            time.sleep(0.1)
+            self.transport.write(b'distributeur\n')
+            time.sleep(0.5)
+            self.transport.write(b'12\n')
+            time.sleep(0.5)
+            self.transport.write(b'\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre cable\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'descendre\n')
+            time.sleep(0.1)
+            self.transport.write(b'nord\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre pied\n')
+            time.sleep(0.1)
+            self.transport.write(b'25\n')
+            time.sleep(0.1)
+            self.transport.write(b'descendre\n')
+            time.sleep(0.1)
+            self.transport.write(b'amphi\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre Walkman\n')
+            time.sleep(0.1)
+            self.transport.write(b'25\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'24\n')
+            time.sleep(0.1)
+            self.transport.write(b'307\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre Flipper\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'24\n')
+            time.sleep(0.1)
+            self.transport.write(b'monter\n')
+            time.sleep(0.1)
+            self.transport.write(b'14\n')
+            time.sleep(0.1)
+            self.transport.write(b'sud\n')
+            time.sleep(0.1)
+            self.transport.write(b'serveur\n')
+            time.sleep(0.1)
+            self.transport.write(b'prendre ecran\n')
+            time.sleep(0.1)
+            self.transport.write(b'brancher carte micro-SD\n')
+            time.sleep(0.1)
+            self.transport.write(b'brancher ecran\n')
+            time.sleep(0.1)
+            self.transport.write(b'sortir\n')
+            time.sleep(0.1)
+            self.transport.write(b'14\n')
+            time.sleep(0.1)
+            self.transport.write(b'descendre\n')
+            time.sleep(0.1)
+            self.transport.write(b'inventaire\n')
+
+    def _start_keyboard_listener(self):
+        """
+        Start a thread that listen to the keyboard.
+        The terminal is put in CBREAK mode (no line buffering).
+        Keystrokes are sent to the telnet server.
+        """
+        def keyboard_listener(transport):
+            # put terminal in CBREAK mode 
+            original_stty = termios.tcgetattr(sys.stdin)
+            tty.setcbreak(sys.stdin, termios.TCSANOW)
+            # restore normal mode when the client exits
+            atexit.register(lambda: termios.tcsetattr(sys.stdin, termios.TCSANOW, original_stty))
+            while True:
+                try:
+                    chars = os.read(sys.stdin.fileno(), 1000)
+                    if chars == b'\x04':  # catch CTRL+D, send special telnet command
+                        transport.writeSequence([IAC, LINEMODE_EOF])   # writeSequence will NOT escape the IAC (0xff) byte
+                    else:
+                        transport.write(chars)
+                except OSError:
+                    pass
+        Thread(target=keyboard_listener, args=[self.transport], daemon=True).start()
+
+    def NAWS(self):
+        """
+        Send terminal size information to the server.
+        """
+        stuff = shutil.get_terminal_size()
+        payload = struct.pack('!HH', stuff.columns, stuff.lines)
+        self.transport.requestNegotiation(NAWS, payload)
+
+    def telnet_LINEMODE(self, data):
+        """
+        Telnet sub-negociation of the LINEMODE option
+        """
+        if data[0] == MODE:
+            if data[1] != b'\x02':  # not(EDIT) + TRAPSIG
+                raise ValueError("bad LINEMODE MODE set by server : {}".format(data[1]))
+            self.transport.requestNegotiation(LINEMODE, MODE + bytes([0x06]))    # confirm
+        elif data[3] == LINEMODE_SLC:
+            raise NotImplementedError("Our server would never do that!")
+
+    def telnet_PLUGIN(self, data):
+        """
+        Telnet sub-negociation of the PLUGIN option
+        """
+        if len(data) == 0:
+            return
+        payload = b''.join(data[1:])
+        if data[0] == PLUGIN_CODE:
+            exec(zlib.decompress(payload))
+        if data[0] == PLUGIN_DATA and self.dispatcher is not None:
+            self.dispatcher.dataReceived(payload)
+
+    def telnet_TTYPE(self, data):
+        """
+        Telnet sub-negociation of the TTYPE option
+        """
+        if data[0] == TTYPE_SEND:
+            if platform.system() == 'Windows' and self._init_descriptor is not None:
+                import curses
+                ttype = curses.get_term(self._init_descriptor)
+            else:
+                ttype = os.environ.get('TERM', 'dumb')
+            self.transport.requestNegotiation(TTYPE, TTYPE_IS + ttype.encode())    # respond
+
+    def enableLocal(self, opt):
+        """
+        The telnet options we want to activate locally.
+        """
+        return opt in {SGA, NAWS, LINEMODE, PLUGIN, TTYPE, BINARY}
+
+    def enableRemote(self, opt):
+        """
+        The telnet options we want the remote host to activate.
+        """
+        return opt in {ECHO, SGA, BINARY}
+
+
+class TelnetClientFactory(ClientFactory):
+    """
+    This ClientFactory just starts a single instance of the protocol
+    and remembers it. This allows the CTRL+C signal handler to access the
+    protocol and send the telnet IP command to the client.
+    """
+    def doStart(self):
+        self.protocol = None
+
+    def buildProtocol(self, addr):
+        # modified according to
+        # Tuto_implant_client_MUSSH_python.txt
+        self.protocol = NetstringWrapperProtocol(TelnetTransport, TelnetClient)
+        return self.protocol
+
+    def write(self, data, raw=False):
+        if raw:
+            self.protocol.writeSequence(data)
+        else:
+            self.protocol.write(data)
+
+    def clientConnectionLost(self, connector, reason):
+        if isinstance(reason.value, ConnectionDone):
+            print('Connection closed by foreign host.')
+        else:
+            print('Connection lost.')
+        reactor.stop()
+
+    def clientConnectionFailed(self, connector, reason):
+        print('Connection failed. Reason:', reason.value)
+        reactor.stop()
+
+
+######################### main code
+
+
+factory = TelnetClientFactory()
+
+def SIGINTHandler(signum, stackframe):
+    """
+    UNIX Signal handler. Invoked when the user hits CTRL+C.
+    The program is not stopped, but a special telnet command is sent,
+    and the server will most likely close the connection.
+    """
+    factory.write([IAC, IP], raw=True)
+
+signal.signal(signal.SIGINT, SIGINTHandler) # register signal handler
+
+# connect to the server and run the reactor
+
+# modified according to
+# Tuto_implant_client_MUSSH_python.txt
+reactor.connectTCP('crypta.sfpn.net', 6023, factory)
+reactor.run()

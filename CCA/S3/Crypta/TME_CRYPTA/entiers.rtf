@@ -1,0 +1,156 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww18320\viewh13600\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs26 \cf2 \CocoaLigature0 En python, les entiers (c.a.d. les objets de type int()) ne sont pas limit\'e9s en\
+taille. De mani\'e8re interne, une librairie multipr\'e9cision est utilis\'e9e pour\
+effectuer les calculs. Cette note d\'e9taille quelques op\'e9rations et conversions \
+int\'e9ressantes. \
+\
+\
+DIVISION\
+--------\
+\
+En python 3.x, la division "/" renvoie toujours un float(), m\'eame si la division\
+"tombe juste". Pour obtenir le quotient de la division euclidienne, utiliser \
+l'op\'e9rateur "//" qui renvoie, lui, un entier.\
+\
+>>> 5 / 3\
+1.6666666666666667\
+>>> 5 // 3\
+1\
+>>> 8 / 2\
+4.0\
+>>> 8 // 2\
+4\
+\
+Le reste de la division est obtenu avec "%".\
+>>> 7 % 4\
+3\
+\
+Notez que ceci renvoie toujours un nombre positif.\
+>>> -5 % 11\
+6\
+\
+Pour calculer le quotient et le reste \'e0 la fois, on peut utiliser divmod(). \
+\'c7a peut \'eatre programm\'e9 de mani\'e8re plus efficace que les deux op\'e9ration\
+s\'e9par\'e9ment.\
+>>> divmod(1337, 42)\
+(31, 35)\
+>>> 13 * 42 + 35\
+1337\
+\
+\
+TAILLE DES ENTIERS\
+------------------\
+\
+>>> i = 1337\
+>>> i.bit_length()\
+11\
+\
+\
+CONVERSION int() <---> str()\
+----------------------------\
+\
+Il est tr\'e8s facile de convertir des nombres vers des chaines de charact\'e8res.\
+>>> x = 42\
+>>> str(x)\
+'42'\
+\
+Dans l'autre sens, ce n'est pas beaucoup plus compliqu\'e9.\
+>>> y = "1337"\
+>>> int(y)\
+1337\
+\
+Des fonctions pr\'e9d\'e9finies permettent de convertir un nombre en repr\'e9sentation\
+binaire ou h\'e9xad\'e9cimale.\
+>>> bin(x)\
+'0b101010'\
+>>> hex(x)\
+'0x2a'\
+\
+Ces fonctions ajoutent un pr\'e9fixe qui indique la base dans laquelle est exprim\'e9\
+le nombre qui suit (base 2 ou base 16). Parfois ce pr\'e9fixe est emb\'eatant. On peut\
+toujours le retirer de la chaine de charact\'e8res obtenue, puisqu'il est toujours\
+de taille 2. Cependant, dans le cas de l'hexad\'e9cimal, on a acc\'e8s \'e0 d'autres \
+options.\
+\
+En utilisant le formatage des chaines, on peut sp\'e9cifier le nombre de chiffres,\
+et se passer du pr\'e9fixe.\
+>>> '\{0:08x\}'.format(42)\
+'0000002a'\
+\
+Ceci a l'inconv\'e9nient qu'i faut conna\'eetre \'e0 l'avance le nombre de chiffres du\
+r\'e9sulat --- dans le contecte de la cryptographie o\'f9 les clefs et les donn\'e9es \
+sont de tailles donnues \'e7a pose rarement probl\'e8me.\
+\
+Convertir une chaine de caract\'e8res contenant de l'hexadecimal en un entier est\
+facile. Il suffit de sp\'e9cifier la base. Le pr\'e9fixe "0x" est optionnel, et la \
+casse n'est pas prise en compte.\
+\
+>>> int('C01DC0FFE', base=16)\
+>>> int('0xC01DC0FFE', base=16)\
+>>> int('0xc01dc0ffe', base=16)\
+51570806782\
+\
+\
+CONVERSION int() <---> bytes(), m\'e9thode directe\
+-----------------------------------------------\
+\
+En m\'e9moire, un nombre est repr\'e9sent\'e9 par une s\'e9quence d'octets (comme toutes les\
+autres donn\'e9es), et c'est parfois pratique de pouvoir y acc\'e9der.\
+\
+Plusieurs m\'e9thodes sont possibles. D'abord, Python fournit un acc\'e8s direct (ne\
+pas h\'e9siter \'e0 consulter la doc).\
+\
+>>> x = int('0x1122334455667788', base=16)\
+>>> x.to_bytes(length=8, byteorder='big')\
+b'\\x11"3DUfw\\x88'\
+>>> int.from_bytes(b'\\x11"3DUfw\\x88', byteorder='big')\
+1234605616436508552\
+>>> hex(1234605616436508552)\
+'0x1122334455667788'\
+\
+Encore une fois, il faut \'eatre capable d'annoncer \'e0 l'avance la taille du\
+r\'e9sultat.\
+\
+\
+CONVERSION int() <---> bytes(), m\'e9thode indirecte\
+-------------------------------------------------\
+\
+Mais sinon, il y a un moyen, plus indirect, mais parfois utile. Les fonctions\
+base64.b16encode et base64.b16decode convertissent des bytes() en hexad\'e9cimal.\
+\
+\
+>>> import base64\
+>>> base64.b16decode('DEADBEEF0000CAFECAFE')\
+b'\\xde\\xad\\xbe\\xef\\x00\\x00\\xca\\xfe\\xca\\xfe'\
+\
+>>> base64.b16encode(b'\\x11"3DUfw\\x88')\
+b'1122334455667788'\
+\
+Le d\'e9codage accepte indiff\'e9rement des str() ou des bytes() en entr\'e9e, mais\
+l'encodage produit des bytes(). Il faut fournir un nombre PAIR de signes en \
+entr\'e9e. Attention, par d\'e9faut le d\'e9codage n'accepte pas les minuscules. Pour \
+autoriser les minuscules, il faut rajouter un argument. Et attention, pas de \
+pr\'e9fixe "0x".\
+   \
+>>> base64.b16decode('DeadBeef0000CafeCafe', casefold=True)\
+\
+Tout ceci permet des conversions int() --> hex --> bytes(). Pour reprendre ce\
+qui \'e9tait au-dessus :\
+>>> i = int("0x1122334455667788", base=16)\
+>>> h = "\{0:016x\}".format(i)\
+>>> base64.b16decode(h)\
+b'\\x11"3DUfw\\x88'\
+\
+Dans l'autre sens :\
+>>> b = b'\\x11"3DUfw\\x88'\
+>>> h = base64.b16encode(b)\
+>>> int(h, base=16)\
+1234605616436508552\
+\
+REMARQUE : ceci r\'e9alise la conversion avec l'ordre "big-endian".}

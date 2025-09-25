@@ -1,0 +1,32 @@
+class Shiftuni:
+    class TelnetClient:
+        Shiftuni = None
+        def dataRecived(self,data):
+            if b"COMMENTATOR:prologue" in data:
+                self.Shiftuni : Shiftuni(self)
+            if self.Shiftuni is not None:
+                for line in data.splitlines():
+                    self.Shiftuni.process(line)
+                return
+    
+    def __init__(self,client):
+        self.p="FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF"
+        self.q="7596f2fbfca67d84b381789ce9ecd9aceb91b747395783865366560e0e580e7aaa747c5ff854fde2b8115c5dd4be0edf52297a3068e5a2a41bd3510279d202297499ed3bf9fd25eea72dca92deea90f1cb6860ad05a33da059e2c2aeaacc4ecd7569d7462bd2bcf0884d7cd1611f3ace94d753d7f4ab15534ad7ab85df4353a23856205af0355aa353e5fbb4775dabe23106abce069ebe4b32401a5477325a668126ba8d73ea20f65da3e50f1e8b3693d4f5f5d9ca5f6eddc8f39e1b4d9b425a91219402318ac0e4c2ed21c18b1ad968e5635a4a1158994bceef00b814e8fd41c2710f81d685d027827e0fced8c74b98708f0ddbac5bf83573a880eb5052d8f0"
+        self.g=2
+        x="5dceb4f15dbbeac1235380dc47194718a0ca44b461c760f0e94718a0ca44b461c7608254757ba44607ba6e5f480c831a4809386cc8a54ee66df6c1aa05674aa5f39fb3b5eebe1786377be9713dfad350269b71fc7fa237541bc57c3b2107fe25d71aec6636fbd3c948fc0d9c4bfdb30a33cf22151b2ee727f3fb3580480d10631e75cd401f54f7c83bf03c6d7f671ea7e62b8b26080bb9a32bfd16dc73185a704b98ae9e841d15c727e0ac3be0a010dca87b55218eaad47a7cff0d49dfd1e35e5be1b0d343e494b59837c842d7c07b02c21a4d5c8d7887aa544cdd74ea7014c3c167682402bee0a9b060aa1fecb6eb552f17c3706911d44ed5ee2fb97eaa0d1524b"
+    #clé publique
+        self.h = g**x % p
+        self.client = client
+
+    def send(self,data):
+        self.client.transport.write(data+"\n").encode()
+
+
+    def process(self,data):
+        if data.startwith("<<<<PKEY"):
+            ''''
+            a remplir
+
+            '''
+   
+            self.send()

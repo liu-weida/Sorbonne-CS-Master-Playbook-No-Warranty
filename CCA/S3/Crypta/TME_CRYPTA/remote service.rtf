@@ -1,0 +1,43 @@
+{\rtf1\ansi\ansicpg936\cocoartf2758
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh18000\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Available Remote Services\
+-------------------------\
+\
+>>> - ihm.look : () -> tuple\
+Simule vos yeux.  Renvoie (description, liste des objets)\
+\
+- ihm.think : (what: str) -> None\
+Simule votre propre pens\\u00e9e.\
+\
+- login.handshake : (username: str) -> dict\
+Initie le processus login. N\\u00e9cessite un argument ``username''. Renvoie le challenge et un token opaque.\
+\
+- login.signature : (signature: str, token: str) -> str\
+Termine le processus de login. Il faut fournir la signature du challenge et le token opaque.\
+\
+- server.history : () -> list\
+Renvoie une liste de chaines de caract\\u00e8res (une par commit)\
+\
+- server.sessions : () -> list\
+Renvoie (session, IP, username, start, end, location) pour chaque session sur le serveur\
+\
+- server.status : () -> dict\
+Renvoie un objet avec des informations inutiles sur le serveur\
+\
+- service.echo : (**kwds: Any) -> Any\
+Renvoie les arguments fournis.\
+\
+- service.extra_free_point : (magic_string: str) -> str\
+Utiliser ce service rapporte un point suppl\'e9mentaire, si vous fournissez la cha\'eene magique.\
+\
+- service.free_point : (questcequondit: str) -> str\
+Utiliser ce service rapporte un point, si vous demandez poliment.\
+\
+- service.list : () -> list\
+Renvoie une liste de paires (method, description).\
+}
