@@ -1,0 +1,77 @@
+// 假设系统中有N个节点，每个节点可能处于活跃或非活跃状态
+// 每个节点都有一个本地逻辑时钟h，初始值为0
+// unack表示该节点发送出去但还未收到确认的消息数
+// etat表示节点的状态，有actif（活跃）和inactif（非活跃）两种状态
+// last记录最后发送令牌的节点编号，hfin记录算法结束时的逻辑时钟值
+// nbagr是收到终止同意消息的计数器
+
+int unack = 0;
+int h = 0;
+int last = -1; // 初始化为-1，表示还没有节点发送令牌
+int hfin = 0;
+int nbagr = 0;
+etat = actif; // 初始状态设为活跃
+
+void envoyer(contenu, i, j) {
+    unack++;
+    send(<apel, contenu, _, i, j>);
+}
+
+void recevoir(contenu, j) {
+    if (etat == inactif) {
+        actif(); // 若当前节点处于非活跃状态且收到消息，则变为活跃状态
+    }
+    send(<ack, _, h, i, j>);
+}
+
+void desactivation() {
+    etat = inactif;
+    verifierTermination();
+}
+
+void verifierTermination() {
+    if (unack == 0 && etat == inactif) {
+        h++;
+        last = i;
+        hfin = h;
+        nbagr = 0;
+        broadcast(term, h, i); // 向所有节点广播终止消息
+    }
+}
+
+void recv(msg) {
+    switch (msg.type) {
+        case ack:
+            unack--;
+            h = max(h, msg.h);
+            verifierTermination();
+            break;
+        case term:
+            h = max(h, msg.hj);
+            if (etat == actif || unack > 0) {
+                // 若当前节点活跃或有未确认的消息，则不采取行动
+            } else {
+                if ((msg.hj, msg.j) > (hfin, last)) {
+                    h = msg.hj;
+                    hfin = msg.hj;
+                    last = msg.j;
+                    send(agr, _, h, i, j); // 向发起节点发送同意终止的消息
+                }
+            }
+            break;
+        case agr:
+            if (msg.hj == hfin) {
+                nbagr++;
+                if (nbagr == N - 1) {
+                    // 所有节点均已同意终止
+                    annonceTermination(); // 宣布系统终止
+                }
+            }
+            break;
+    }
+}
+
+void annonceTermination() {
+    // 实现系统终止的逻辑
+    // 这里可以是释放资源、保存状态等操作
+}

@@ -1,0 +1,52 @@
+etai{actif，passif}
+messageType{apel,term,agr}
+int unack;
+int h;
+int last;
+int hfin;
+
+envoyer(contenu,i) to j{
+unack++;
+send(<apel,contenu,_,i,j>)
+}
+
+recevoir(contenu,j){
+if(etat == incatif){actif}
+send(<ack,_,h,i,j>)
+}
+
+desactivation(){
+etat = inactif;
+if(unack == 0){
+h++;
+last = i;
+hfin=h;
+nbagr=0;
+broadcast(term,h,i);
+}
+recv(<ack,_,h,i,j>){
+unack--;
+h=max(h,hj);
+if((unakc == 0)&&(etat == inactif)){
+h++;
+last=i;
+nbagr=0;
+broadcast(term,h,i);
+}
+recv(<term,hj,i,j>){
+if((etat == actif)||(unack>0){
+h=max(h,hj);
+}else{
+if((hj,j)>(hfin,last)){
+h=hj;
+hfin=hj;
+last=j;
+send(agr,_,h,i,j);}}
+
+}
+recv(<arg,_,hj,j>){
+if(hj == hfin){
+nbagr++;
+if(nbagr ==N-1)
+{annonce de termination}
+}}

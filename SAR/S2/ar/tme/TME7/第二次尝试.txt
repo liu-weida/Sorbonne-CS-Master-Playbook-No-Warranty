@@ -1,0 +1,92 @@
+#define N 3
+
+mtype = {actif, inactif, ack, agr, mes, term};
+
+chan canaux[N] = [N] of {mtype, int, byte};
+bool termine = false;
+int unack[N];
+int hfin;
+int nbagr;
+
+/* 发送消息的函数 */
+inline envoyer(dest, type, h, id) {
+    canaux[dest] ! type, h, id;
+    if
+    :: type == mes ->
+        unack[id]++;
+    :: else ->
+        skip;
+    fi;
+}
+
+
+inline broadcast(type, h, id) {
+    byte i = 0;
+    do
+    :: i < N ->
+        if
+        :: i != id ->
+            envoyer(i, type, h, id);
+        :: else ->
+            skip;
+        fi;
+        i = i + 1; // 循环迭代变量更新
+    :: else ->
+        break; // 退出循环的条件
+    od;
+}
+
+
+/* 检查终止的函数 */
+inline verifierTermination(id, h) {
+    if
+    :: (unack[id] == 0 && nbagr == N - 1) ->
+        termine = true;
+        hfin = h;
+    fi;
+}
+
+/* 接收消息并进行相应处理 */
+proctype un_site(byte id) {
+    int h = 0;
+    mtype etat = actif;
+    unack[id] = 0;
+
+    do
+    :: etat == actif && !termine ->
+        broadcast(mes, h, id); // 使用广播发送活动消息
+        etat = inactif; // 转变为非活跃状态
+        h = h + 1; // 逻辑时钟递增
+    :: etat == inactif && !termine ->
+        if
+        :: canaux[id]?mes, _, _ ->
+            etat = actif; // 在收到消息后变回活跃状态
+            broadcast(ack, h, id); // 广播确认消息
+        :: canaux[id]?ack, _, _ ->
+            unack[id]--; // 处理确认消息
+        :: canaux[id]?term, _, _ ->
+            if
+            :: unack[id] == 0 ->
+                broadcast(agr, h, id); // 如果没有未确认的消息，则广播同意终止
+                nbagr++; // 自己也同意终止
+            fi
+        :: canaux[id]?agr, _, _ ->
+            nbagr++;
+            if
+            :: nbagr >= N ->
+                termine = true; // 当收到足够多的agr消息时，认为系统可以终止
+                verifierTermination(id, h);
+            fi
+        fi;
+    od;
+}
+
+/* 初始化进程，启动所有节点 */
+init {
+    byte i = 0;
+    do
+    :: i < N ->
+        run un_site(i);
+        i = i + 1;
+    od;
+}

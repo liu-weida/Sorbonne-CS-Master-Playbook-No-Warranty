@@ -1,0 +1,79 @@
+#define N 3
+
+mtype = {actif, inactif, ack, agr, mes, term};
+
+chan canaux[N] = [N] of {mtype, int, byte};
+bool termine = false;
+int unack[N];
+byte last = 255;
+int hfin;
+int nbagr;
+
+inline envoyer(dest, type, h, id) {
+    canaux[dest] ! type, h, id;
+    if
+    :: type == mes -> unack[id]++;
+    :: else -> skip;
+    fi;
+}
+
+inline recevoir(id) {
+    mtype type;
+    int val_horloge;
+    byte emetteur;
+
+    canaux[id]?type, val_horloge, emetteur;
+    if
+    :: type == ack -> unack[emetteur]--;
+    :: else -> skip;
+    fi;
+}
+
+proctype un_site(byte id) {
+    int h = 0;
+    mtype etat = actif;
+    unack[id] = 0;
+
+    do
+    :: (etat == actif) ->
+        byte dest = (id + 1) % N;
+        envoyer(dest, mes, h, id);
+        etat = inactif;
+        h = h + 1;
+    :: (etat == inactif) ->
+        if
+        :: canaux[id]?mes, _, _ ->
+            etat = actif;
+            recevoir(id);
+            envoyer((id + 1) % N, ack, h, id);
+        :: canaux[id]?ack, _, _ ->
+            recevoir(id);
+        :: canaux[id]?term, _, _ ->
+            if
+            :: unack[id] == 0 ->
+                envoyer((id + 1) % N, agr, h, id);
+                etat = inactif;
+                if
+                :: id == last ->
+                    termine = true;
+                fi;
+            fi;
+        :: canaux[id]?agr, _, _ ->
+            nbagr = nbagr + 1;
+            if
+            :: nbagr == N - 1 ->
+                termine = true;
+            fi;
+        fi;
+    od;
+}
+
+init {
+    byte i = 0;
+    do
+    :: i < N ->
+        run un_site(i);
+        i = i + 1;
+    od;
+    last = N - 1; // Assume the last site to be the last initialized
+}

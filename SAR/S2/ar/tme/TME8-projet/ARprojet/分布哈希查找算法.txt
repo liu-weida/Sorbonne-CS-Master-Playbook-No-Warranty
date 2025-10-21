@@ -1,0 +1,34 @@
+finger [0,k-1] table routage
+send (m) to q属于finger
+fonction initiate_lookup(k){
+lookup(k,p)
+}
+
+fonction lookup(k,p){
+next = findnext(k)
+if(next == null){
+lookup(<responsable,k,p>)to fingerp[0]
+}else{
+lookup(<lookup,k,p>) to next
+}
+}
+
+fonction findnext(k){
+for(i=k-1;0;-1){
+if(k属于]fingerp[i];p]){
+return fingerp[i]}
+}
+}
+return null
+}
+
+a reception de <lookup,k,p>{
+lookup(k,p)}
+
+a reception de <responsable,k,p>{
+if(k属于Cp){
+send （<succes,k>） to p 
+}else{
+send （<echec,k>） to p
+}
+}

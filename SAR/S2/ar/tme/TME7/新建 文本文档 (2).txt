@@ -1,0 +1,93 @@
+1	#define N 3
+2	
+3	mtype = {actif, inactif, ack, agr, mes, term};
+4	
+5	chan canaux[N] = [N] of {mtype, int, byte};
+6	
+7	bool termine = false; // 全局标志，用于指示是否检测到终止
+8	int unack[N]; // 未确认消息计数器
+9	byte last = 255; // 最后一个发送消息的节点，初始化为无效值
+10	int hfin; // 算法结束时的逻辑时钟值
+11	int nbagr; // 收到终止同意消息的计数器
+12	
+13	inline envoyer(dest, type, h, id) {
+14	    canaux[dest] ! type, h, id;
+15	    if
+16	    :: type == mes -> unack[id]++;
+17	    fi;
+18	}
+19	
+20	inline recevoir(id) {
+21	    mtype type;
+22	    int val_horloge;
+23	    byte emetteur;
+24	
+25	    canaux[id] ? type, val_horloge, emetteur;
+26	    if
+27	    :: type == ack -> unack[emetteur]--;
+28	    fi;
+29	}
+
+inline verifierTermination(id) {
+    if
+    :: unack[id] == 0 ->
+        last = id;
+        hfin = h[id];
+        nbagr = 0; // 这里简化处理，实际中可能需要通过消息确认所有节点都已同意终止
+        // 向所有其他节点广播终止消息
+        byte i = 0;
+        do
+        :: i < N ->
+            if
+            :: i != id -> 
+                envoyer(i, term, id);
+            fi;
+            i = i + 1;
+        od;
+    fi;
+}
+30	
+31	proctype un_site(byte id) {
+32	    int h = 0;
+33	    mtype etat = actif;
+34	    unack[id] = 0;
+35	
+36	    do
+37	    :: (etat == actif) ->
+38	        byte dest = (id + 1) % N;
+39	        envoyer(dest, mes, h, id); // 发送消息
+40	        etat = inactif; // 发送消息后变为非活跃状态
+41	        h = h + 1; // 发送消息后逻辑时钟自增
+42	    :: (etat == inactif) ->
+43	        if
+44	        :: canaux[id]?mes, _, _ ->
+45	            etat = actif; // 收到消息变回活跃状态
+46	        :: canaux[id]?ack, _, _ ->
+47	            // 收到确认消息，不改变状态，但可能需要更新内部逻辑
+48	        :: canaux[id]?term, _, _ ->
+49	            if
+50	            :: (unack[id] == 0) -> // 如果没有未确认的消息
+51	                envoyer((id + 1) % N, agr, h, id); // 向下一个节点发送终止同意消息
+52	                etat = inactif;
+53	            fi
+54	        :: canaux[id]?agr, _, _ ->
+55	            nbagr = nbagr + 1;
+56	            if
+57	            :: (nbagr == N - 1) -> // 如果收到所有其他节点的终止同意
+58	                termine = true; // 标记终止条件达成
+59	                break; // 退出循环
+60	            fi
+61	        fi;
+62	    od;
+63	}
+64	
+65	init {
+66	    byte i = 0;
+67	    do
+68	    :: (i < N) ->
+69	        run un_site(i);
+70	        i++;
+71	    :: else ->
+72	        break;
+73	    od
+74	}

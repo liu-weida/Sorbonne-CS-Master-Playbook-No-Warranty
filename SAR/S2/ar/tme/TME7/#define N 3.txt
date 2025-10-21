@@ -1,0 +1,114 @@
+#define N 3
+
+mtype = {actif, passif, apel, ack, agr, term};
+
+chan canaux[N] = [N] of {mtype, int, byte, byte, byte}; // <消息类型, 内容, horloge值, 发送者id, 接收者id>
+
+bool termine = false;
+
+/* 发送消息 */
+inline envoyer(byte type_msg, int contenu, byte h, byte i, byte j) {
+    canaux[j] ! type_msg, contenu, h, i, j;
+}
+
+/* 接收ack消息 */
+inline recv_ack(byte id, byte h, byte i, byte j) {
+    canaux[id] ? ack, _, h, i, j;
+}
+
+/* 接收term消息 */
+inline recv_term(byte id, int h, byte i, byte j) {
+    canaux[id] ? term, h, i, j;
+}
+
+/* 接收agr消息 */
+inline recv_agr(byte id, int h, byte j) {
+    canaux[id] ? agr, _, h, _, j;
+}
+
+inline recevoir(byte id) {
+    mtype type;
+    int hmsg; // 消息中的时钟值
+    byte sdr; // 发送者ID
+    byte dest; // 接收者ID，即当前进程ID
+    int contenu; // 消息内容，根据实际需求使用
+
+    /* 尝试接收所有类型的消息，并针对每种消息类型进行处理 */
+    do
+    :: canaux[id]?ack, hmsg, sdr, dest ->
+        /* 处理ack消息的逻辑 */
+        /* 这里插入处理ack消息的详细逻辑 */
+        break; // 根据需要决定是否在处理后退出循环
+
+    :: canaux[id]?agr, hmsg, sdr, dest ->
+        /* 处理agr消息的逻辑 */
+        /* 这里插入处理agr消息的详细逻辑 */
+        break; // 根据需要决定是否在处理后退出循环
+
+    :: canaux[id]?term, hmsg, sdr, dest ->
+        /* 处理term消息的逻辑 */
+        /* 如果当前进程是actif或unack>0，则更新h，否则发送agr消息 */
+        if
+        :: (etat == actif || unack > 0) ->
+            h = (h > hmsg) ? h : hmsg;
+        :: else ->
+            if
+            :: (hmsg > hfin || (hmsg == hfin && sdr > dernier)) ->
+                h = hmsg;
+                hfin = hmsg;
+                dernier = sdr;
+                canaux[sdr] ! agr, 0, h, id, sdr;
+            fi;
+        fi;
+        break; // 根据需要决定是否在处理后退出循环
+    od;
+}
+
+
+/* 进程变为非激活状态 */
+inline desactivation() {
+    etat = passif;
+}
+
+proctype un_site(byte id) {
+    byte i; // 用于循环
+    int h = 0; // 本地时钟
+    byte unack = 0; // 未被确认的消息数量
+    byte nbagr = 0; // 收到的agr消息数量
+    mtype etat = actif; // 节点状态，默认为活跃
+    byte dernier = 0; // 最后一个发送term消息的节点
+    int hfin = 0; // 结束时的时钟值
+
+    do
+    :: (etat == actif) -> // 如果节点处于活跃状态
+        if
+        :: true -> // 模拟随机选择发送消息或变为非活跃状态
+            envoyer(apel, /* contenu */, h, id, (id+1)%N); // 发送消息到下一个节点
+            unack++; // 增加未确认消息计数
+            h++; // 递增本地时钟
+        :: true ->
+            desactivation(); // 变为非活跃状态
+        fi;
+    :: else ->
+        if
+        :: (unack == 0 && nbagr == N-1) -> // 如果没有未确认的消息，并且收到了足够的agr消息
+            termine = true; // 标记算法终止
+            break; // 退出循环
+        fi;
+    od;
+
+    /* 接收消息 */
+    do
+    :: canaux[id]?message, _, _, _, _ -> // 检查是否有消息到达
+        recevoir(id); // 调用之前定义的接收逻辑处理函数
+        if
+        :: (unack == 0 && etat == passif) -> // 如果没有未确认的消息并且节点是非活跃的
+            for (i = 0; i < N; i++) {
+                if (i != id) {
+                    envoyer(term, hfin, h, id, i); // 向所有其他节点广播term消息
+                }
+            }
+        fi;
+    od;
+}
+

@@ -1,0 +1,99 @@
+#define N 3 /* Number of processes */
+#define L 10 /* Buffer size */
+#define NIL (N+1) /* for an undefined value */
+mtype = {req, tk};
+
+chan canal[N] = [L] of {mtype, byte};
+
+byte SharedVar = 0; /* Shared variable */
+
+/* Initialize local variables except reqId, val, and typ_mes */
+inline Initialisation() {
+    requesting = false;
+    token = (id == Initial_Token_Holder); 
+    father = canal[Initial_Token_Holder];
+    next = NIL;
+}
+
+/* Operations performed when requesting CS 要等待token = true*/
+inline Request_CS() {
+    requesting = true;
+	if
+	::(father != NIL) ->father ! req, id;father = NIL;
+	fi;
+}
+
+/* Operations performed upon leaving CS */
+inline Release_CS() {
+    requesting = false;
+	if
+	::(next != NIL) ->canal[next] ! tk, 0;
+        token = false;
+        next = NIL;
+	fi;
+}
+
+/* Handling the reception of a request */
+inline Receive_Request_CS() {
+	if
+	::(father == NIL) ->
+		if
+		::(requesting==true) -> next = reqId;
+		::else -> token = false; canal[reqId] ! tk, 0;
+		fi;
+	::else -> father ! req, reqId;
+    	fi;
+    	father = canal[reqId];
+}
+
+/* Handling the reception of the token */
+inline Receive_Token() {
+    token = true;
+}
+
+proctype node(byte id; byte Initial_Token_Holder) {
+    bit requesting; /* Indicates if the process has requested CS */
+    bit token; /* Indicates if the process has the token */
+    byte father; /* Probable owner */
+    byte next; /* Next node to send the token */
+    byte val; /* Value contained in the message */
+    mtype typ_mes; /* Type of the received message */
+    byte reqId; /* ID of the requester, for a request */
+    chan canal_rec = canal[id]; /* Alias for my reception channel */
+    xr canal_rec; /* I must be the only one to read it */
+
+    Initialisation();
+    do
+:: ((token == true) && empty(canal_rec) && (requesting == true)) ->
+    SharedVar = SharedVar + 1; /* 模拟对共享变量的操作 */
+	assert(SharedVar == 1);
+	SharedVar = SharedVar -1;
+    Release_CS();
+:: canal_rec ? typ_mes(val) ->
+    if
+    :: (typ_mes == req) ->
+        reqId = val;
+        Receive_Request_CS();
+            ;
+    :: (typ_mes == tk) ->
+        Receive_Token();
+    fi;
+:: (requesting == false) ->
+    Request_CS();
+od;
+
+}
+
+/* Create a set of N processes */
+init {
+    byte i = 0;
+    atomic {
+        i = 0;
+        do
+        :: i < N ->
+            run node(i,0);
+            i++;
+        :: i == N -> break;
+        od;
+    }
+}

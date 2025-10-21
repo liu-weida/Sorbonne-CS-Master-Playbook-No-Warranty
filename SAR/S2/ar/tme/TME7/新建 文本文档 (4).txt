@@ -1,0 +1,85 @@
+#define N 3
+
+mtype = {actif, inactif, ack, agr, mes, term};
+
+chan canaux[N] = [N] of {mtype, int, byte};
+bool termine = false;
+int unack[N];
+byte last = N-1; // 初始化为最后一个节点的索引
+int hfin;
+int nbagr;
+
+/* 发送消息的inline函数 */
+inline envoyer(dest, type, h, id) {
+    canaux[dest] ! type, h, id;
+    if
+    :: type == mes -> unack[id]++;
+    :: else -> skip;
+    fi;
+}
+
+/* 接收消息并处理确认逻辑的inline函数 */
+inline recevoir(id) {
+    mtype type;
+    int h;
+    byte emetteur;
+
+    canaux[id]?type, h, emetteur;
+    if
+    :: type == ack -> unack[emetteur]--;
+    :: else -> skip;
+    fi;
+}
+
+/* 验证终止条件的inline函数 */
+inline verifierTermination(id, h) {
+    if
+    :: unack[id] == 0 && last == id ->
+        termine = true;
+        hfin = h;
+    fi;
+}
+
+/* 每个节点的主进程 */
+proctype un_site(byte id) {
+    int h = 0;
+    mtype etat = actif;
+    unack[id] = 0;
+
+    do
+    :: etat == actif ->
+        byte dest = (id + 1) % N;
+        envoyer(dest, mes, h, id); // 发送消息
+        etat = inactif; // 更改状态为非活跃
+        h = h + 1; // 逻辑时钟递增
+        verifierTermination(id, h); // 检查终止条件
+    :: etat == inactif ->
+        if
+        :: canaux[id]?mes, _, _ ->
+            envoyer((id + 1) % N, ack, h, id); // 收到消息后发送确认
+            etat = actif; // 收到消息后变为活跃状态
+        :: canaux[id]?ack, _, _ ->
+            recevoir(id); // 处理接收到的确认消息
+        :: canaux[id]?term, _, _ ->
+            envoyer((id + 1) % N, agr, h, id); // 收到终止请求后发送同意终止
+        :: canaux[id]?agr, _, _ ->
+            nbagr = nbagr + 1;
+            if
+            :: nbagr == N - 1 ->
+                verifierTermination(id, h); // 所有节点都同意终止时检查终止条件
+            fi;
+        fi;
+    od;
+}
+
+/* 初始化进程，启动所有节点 */
+init {
+    byte i;
+    i = 0;
+    do
+    :: i < N ->
+        run un_site(i);
+        i = i + 1;
+    :: else -> break;
+    od;
+}

@@ -1,11 +1,17 @@
 # Sorbonne-CS-Master-Playbook-No-Warranty
-# 一份完全不负责任的索邦计算机硕士生存指东
 
-## 指北称不上
-## 指南太严肃
-## 只好指东啦
-### 西：？？？
+[![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md)
+[![中文](https://img.shields.io/badge/语言-中文-red.svg)](README.zh-CN.md)
+[![Français](https://img.shields.io/badge/lang-Français-green.svg)](README.fr.md)
 
-#### 由多位不同方向在校生/毕业生编写
-#### 仅供参考，请勿照抄
-#### 不然撞车了别赖我们（摊手.jpg）
+
+# A Totally Irresponsible Survival Guide for Sorbonne CS Students
+
+## Not quite a “North Star”
+## Too unserious for a “Guide”
+## So here we go… pointing East!
+### West: still under construction 🤔
+
+#### Written by several current students and alumni from all sorts of directions
+#### For reference only — please don’t copy-paste it blindly
+#### And if you do and it backfires… well, you’ve been warned ¯\_(ツ)_/¯
