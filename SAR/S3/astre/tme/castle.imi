@@ -1,0 +1,91 @@
+(*******************************************************************************
+ *                                IMITATOR MODEL                               
+ * 
+ * Title            : Castle
+ * Author           : Dylan Marinho
+ *
+ * Created          : 2025/08/25
+ * 
+ * IMITATOR version : 3
+ ******************************************************************************)
+
+var
+
+    paint, torch, window, treasure: bool;
+
+(************************************************************)
+  automaton castle
+(************************************************************)
+loc one: invariant paint & torch
+    when True do {  paint <- True; torch <- True; window <- False; treasure <- False; } goto two;
+    when True do {  paint <- True; torch <- False; window <- False; treasure <- False; } goto three;
+
+loc two: invariant paint & torch
+    when True do {  paint <- True; torch <- True; window <- False; treasure <- False; } goto two;
+    when True do {  paint <- False; torch <- True; window <- True; treasure <- False; } goto six;
+
+loc three: invariant paint
+    when True do {  paint <- True; torch <- True; window <- False; treasure <- False; } goto one;
+    when True do {  paint <- False; torch <- True; window <- False; treasure <- True; } goto height;
+
+loc four: invariant treasure
+    when True do {  paint <- True; torch <- True; window <- False; treasure <- False; } goto two;
+    when True do {  paint <- True; torch <- False; window <- False; treasure <- False; } goto five;
+    when True do {  paint <- False; torch <- False; window <- True; treasure <- False; } goto seven;
+
+loc five: invariant paint
+    when True do {  paint <- True; torch <- True; window <- False; treasure <- False; } goto two;
+    when True do {  paint <- False; torch <- True; window <- False; treasure <- True; } goto height;
+
+loc six: invariant window & torch
+    when True do {  paint <- True; torch <- False; window <- False; treasure <- False; } goto three;
+    when True do {  paint <- True; torch <- False; window <- False; treasure <- False; } goto five;
+    when True do {  paint <- False; torch <- False; window <- True; treasure <- False; } goto seven;
+    when True do {  paint <- False; torch <- True; window <- False; treasure <- False; } goto ten;
+
+loc seven: invariant window
+    when True do {  paint <- True; torch <- False; window <- False; treasure <- False; } goto five;
+    when True do {  paint <- False; torch <- True; window <- False; treasure <- True; } goto height;
+    when True do {  paint <- True; torch <- False; window <- True; treasure <- False; } goto nine;
+
+loc height: invariant torch & treasure
+    when True do {  paint <- False; torch <- True; window <- True; treasure <- False; } goto six;
+
+loc nine: invariant window & paint
+    when True do {  paint <- False; torch <- True; window <- False; treasure <- False; } goto ten;
+
+loc ten: invariant torch
+    when True do {  paint <- True; torch <- False; window <- True; treasure <- False; } goto nine;
+
+end (* castle *)
+
+
+
+(************************************************************)
+(* Initial state *)
+(************************************************************)
+
+init := {
+
+  discrete =
+    (* Initial state *)
+    loc[castle] := one,
+
+    (* Initial discrete variables assignments *)
+    paint <- True,
+    torch <- True,
+    window <- False,
+    treasure <- False
+  ;
+
+  continuous =
+    
+    ;
+}
+
+
+
+(************************************************************)
+(* The end *)
+(************************************************************)
+end
