@@ -1,0 +1,12 @@
+1- Rappelez la différence entre un signal masqué et un signal ignoré.
+	Signal masqué = signal temporairement retardé, signal ignoré = réception fait NO-OP
+
+2- Expliquez les différences entre ces deux mécanismes de commutation.
+	Setjmp/longjmp : rupture de séquence et sauvegarde uniquement de PC et SP ; il faut une
+	sauvegarde explicite de pile et le longjmp modifie explicitement PC.
+	Swtch() : commutation faite sur retour de fonction. Entrée ds swtch sur pile de A et sortie
+	sur pile de B, sans rupture de séquence dans swtch, c’est le retour sur swtch qui implique
+	la modification de PC. Il y a en interne de swtch les appels à savu / retu qui sauvegarde
+	les registres dans la zone u. Les zones u des différents processus étant distinguées
+	(chacune étant dans son image swappable propre), il n’y a pas de mélange de pile.
+
